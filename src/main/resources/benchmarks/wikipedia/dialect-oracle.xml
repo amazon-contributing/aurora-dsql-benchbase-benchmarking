@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<dialects>
+    <dialect type="ORACLE">
+        <procedure name="GetPageAnonymous">
+            <statement name="selectPage">
+                SELECT * FROM page WHERE page_namespace = ? AND page_title = ? FETCH NEXT 1 ROWS ONLY
+            </statement>
+           <statement name="selectPageRevision">
+                SELECT * FROM page,revision WHERE (page_id=rev_page) AND rev_page = ? AND page_id = ? AND (rev_id=page_latest) FETCH NEXT 1 ROWS ONLY
+            </statement>
+            <statement name="selectText">
+                SELECT old_text,old_flags FROM text WHERE old_id = ? FETCH NEXT 1 ROWS ONLY
+            </statement>
+        </procedure>
+        <procedure name="GetPageAuthenticated">
+            <statement name="selectUser">
+                SELECT * FROM useracct WHERE user_id = ? FETCH NEXT 1 ROWS ONLY
+            </statement>
+            <statement name="selectPage">
+                SELECT * FROM page WHERE page_namespace = ? AND page_title = ? FETCH NEXT 1 ROWS ONLY
+            </statement>
+            <statement name="selectPageRevision">
+                SELECT * FROM page, revision WHERE (page_id=rev_page) AND rev_page = ? AND page_id = ? AND (rev_id=page_latest) FETCH NEXT 1 ROWS ONLY
+            </statement>
+            <statement name="selectText">
+                SELECT old_text,old_flags FROM text WHERE old_id = ? FETCH NEXT 1 ROWS ONLY
+            </statement>
+        </procedure>
+    </dialect>
+</dialects>

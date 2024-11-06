@@ -1,0 +1,36 @@
+version: '3.5'
+
+services:
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: postgres:alpine
+    command: postgres -N 500 -c shared_preload_libraries=pg_stat_statements
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: benchbase
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  postgres-ui:
+    container_name: postgres-ui
+    hostname: postgres-ui
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_LISTEN_PORT: 8080
+    links:
+      - postgres
+    ports:
+      - "8888:8080"
+    volumes:
+      - ${PWD}/servers.json:/pgadmin4/servers.json
