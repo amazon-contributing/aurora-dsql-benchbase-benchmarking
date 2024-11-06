@@ -230,6 +230,26 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>auroradsql</id>
+            <activation>
+                <property>
+                    <name>env.BENCHBASE_PROFILE</name>
+                    <value>auroradsql</value>
+                </property>
+            </activation>
+            <properties>
+                <classifier>auroradsql</classifier>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                    <version>42.7.4</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 
     <dependencies>
