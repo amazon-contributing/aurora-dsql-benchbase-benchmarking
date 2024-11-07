@@ -19,7 +19,11 @@ package com.oltpbenchmark.api;
 
 import static com.oltpbenchmark.types.State.MEASURE;
 
-import com.oltpbenchmark.*;
+import com.oltpbenchmark.LatencyRecord;
+import com.oltpbenchmark.Phase;
+import com.oltpbenchmark.SubmittedProcedure;
+import com.oltpbenchmark.WorkloadConfiguration;
+import com.oltpbenchmark.WorkloadState;
 import com.oltpbenchmark.api.Procedure.UserAbortException;
 import com.oltpbenchmark.types.DatabaseType;
 import com.oltpbenchmark.types.State;
@@ -81,7 +85,9 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
       try {
         this.conn = this.benchmark.makeConnection();
         this.conn.setAutoCommit(false);
-        this.conn.setTransactionIsolation(this.configuration.getIsolationMode());
+        if (this.configuration.getDatabaseType() != DatabaseType.AURORADSQL) {
+          this.conn.setTransactionIsolation(this.configuration.getIsolationMode());
+        }
       } catch (SQLException ex) {
         throw new RuntimeException("Failed to connect to database", ex);
       }
