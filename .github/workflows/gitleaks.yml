@@ -2,11 +2,11 @@ name: Scan for leaked secrets
 
 on:
   push:
-    branches: [ main ]
+    branches: [ to-be-upstreamed, dsql-specific ]
     tags:
       - 'v*'
   pull_request:
-    branches: [ main ]
+    branches: [ to-be-upstreamed, dsql-specific ]
 
 jobs:
   test:
@@ -18,7 +18,7 @@ jobs:
       actions: read
       checks: write
       pull-requests: write
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
