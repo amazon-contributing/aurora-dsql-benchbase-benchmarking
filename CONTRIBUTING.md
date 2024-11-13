@@ -90,6 +90,10 @@ We welcome all contributions! Please open a [pull request](https://github.com/cm
 
 Although you can use any IDE you prefer, there are some configurations for [VSCode](https://code.visualstudio.com/) that you may find useful included in the repository, including [Github Codespaces](https://github.com/features/codespaces) and [VSCode devcontainer](https://code.visualstudio.com/docs/remote/containers) support to automatically handle dependencies, environment setup, code formatting, and more.
 
+## Ensure security before each commit
+Configure git-secrets and run it before every commit. Make sure that secrets are not committed to Git version control.
+Follow [this guide](https://github.com/awslabs/git-secrets) before making a commit and push to your branch.
+
 ## Adding a new DBMS
 
 Please see the existing MySQL and PostgreSQL code for an example.
