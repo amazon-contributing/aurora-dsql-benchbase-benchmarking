@@ -19,8 +19,11 @@ package com.oltpbenchmark.api;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.oltpbenchmark.util.ConnectionUtil;
 
 /**
  * A LoaderThread is responsible for loading some portion of a benchmark's database. Note that each
@@ -39,7 +42,7 @@ public abstract class LoaderThread implements Runnable {
   @Override
   public final void run() {
     beforeLoad();
-    try (Connection conn = benchmarkModule.makeConnection()) {
+    try (Connection conn = ConnectionUtil.makeConnectionWithRetry(benchmarkModule)) {
       load(conn);
     } catch (SQLException ex) {
       SQLException next_ex = ex.getNextException();

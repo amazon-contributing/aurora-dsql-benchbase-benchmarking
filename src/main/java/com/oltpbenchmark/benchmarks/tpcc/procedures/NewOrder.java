@@ -17,16 +17,22 @@
 
 package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Stock;
-import java.sql.*;
-import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class NewOrder extends TPCCProcedure {
 
@@ -280,7 +286,7 @@ public class NewOrder extends TPCCProcedure {
       stmtGetStock.setInt(2, ol_supply_w_id);
       try (ResultSet rs = stmtGetStock.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException("S_I_ID=" + ol_i_id + " not found!");
+          throw new UserAbortException("S_I_ID=" + ol_i_id + " not found!");
         }
         Stock s = new Stock();
         s.s_quantity = rs.getInt("S_QUANTITY");
@@ -362,7 +368,7 @@ public class NewOrder extends TPCCProcedure {
       stmtUpdateDist.setInt(2, d_id);
       int result = stmtUpdateDist.executeUpdate();
       if (result == 0) {
-        throw new RuntimeException(
+        throw new UserAbortException(
             "Error!! Cannot update next_order_id on district for D_ID=" + d_id + " D_W_ID=" + w_id);
       }
     }
@@ -374,7 +380,7 @@ public class NewOrder extends TPCCProcedure {
       stmtGetDist.setInt(2, d_id);
       try (ResultSet rs = stmtGetDist.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException("D_ID=" + d_id + " D_W_ID=" + w_id + " not found!");
+          throw new UserAbortException("D_ID=" + d_id + " D_W_ID=" + w_id + " not found!");
         }
         return rs.getInt("D_NEXT_O_ID");
       }
@@ -386,7 +392,7 @@ public class NewOrder extends TPCCProcedure {
       stmtGetWhse.setInt(1, w_id);
       try (ResultSet rs = stmtGetWhse.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException("W_ID=" + w_id + " not found!");
+          throw new UserAbortException("W_ID=" + w_id + " not found!");
         }
       }
     }
@@ -399,7 +405,7 @@ public class NewOrder extends TPCCProcedure {
       stmtGetCust.setInt(3, c_id);
       try (ResultSet rs = stmtGetCust.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException("C_D_ID=" + d_id + " C_ID=" + c_id + " not found!");
+          throw new UserAbortException("C_D_ID=" + d_id + " C_ID=" + c_id + " not found!");
         }
       }
     }

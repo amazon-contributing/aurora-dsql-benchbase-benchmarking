@@ -17,17 +17,21 @@
 
 package com.oltpbenchmark.benchmarks.tpcc;
 
-import com.oltpbenchmark.WorkloadConfiguration;
-import com.oltpbenchmark.api.BenchmarkModule;
-import com.oltpbenchmark.api.Loader;
-import com.oltpbenchmark.api.Worker;
-import com.oltpbenchmark.benchmarks.tpcc.procedures.NewOrder;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.oltpbenchmark.WorkloadConfiguration;
+import com.oltpbenchmark.api.BenchmarkModule;
+import com.oltpbenchmark.api.Loader;
+import com.oltpbenchmark.api.Worker;
+import com.oltpbenchmark.benchmarks.tpcc.custom.auroradsql.DSQLTPCCLoader;
+import com.oltpbenchmark.benchmarks.tpcc.procedures.NewOrder;
+import com.oltpbenchmark.types.DatabaseType;
 
 public final class TPCCBenchmark extends BenchmarkModule {
   private static final Logger LOG = LoggerFactory.getLogger(TPCCBenchmark.class);
@@ -57,6 +61,9 @@ public final class TPCCBenchmark extends BenchmarkModule {
 
   @Override
   protected Loader<TPCCBenchmark> makeLoaderImpl() {
+    if (this.workConf.getDatabaseType() == DatabaseType.AURORADSQL) {
+      return new DSQLTPCCLoader(this);
+    }
     return new TPCCLoader(this);
   }
 

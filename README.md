@@ -7,42 +7,109 @@ BenchBase (formerly [OLTPBench](https://github.com/oltpbenchmark/oltpbench/)) is
 - [Quickstart](#quickstart)
 - [Description](#description)
 - [Usage Guide](#usage-guide)
-- [Contributing](#contributing)
-- [Known Issues](#known-issues)
-- [Credits](#credits)
-- [Citing This Repository](#citing-this-repository)
 
 ---
 
 ## Quickstart
 
-To clone and build BenchBase using the `postgres` profile,
+### Step 1: Setting up Benchbase
+
+1. This is a forked version of the original Benchbase repository that can be pulled from the amazon-contributing github repo using the following command:
 
 ```bash
-git clone --depth 1 https://github.com/cmu-db/benchbase.git
-cd benchbase
-./mvnw clean package -P postgres
+git clone --depth 1 https://github.com/amazon-contributing/aurora-dsql-benchbase-benchmarking.git
+cd aurora-dsql-benchbase-benchmarking
+./mvnw clean package -P auroradsql
 ```
 
-This produces artifacts in the `target` folder, which can be extracted,
+2. After cloning and building the package:
 
 ```bash
 cd target
-tar xvzf benchbase-postgres.tgz
-cd benchbase-postgres
+tar xvzf benchbase-auroradsql.tgz
+cd benchbase-auroradsql
 ```
 
-Inside this folder, you can run BenchBase. For example, to execute the `tpcc` benchmark,
 
-```bash
-java -jar benchbase.jar -b tpcc -c config/postgres/sample_tpcc_config.xml --create=true --load=true --execute=true
+
+### Step 2: Loading TPC-C data
+
+Benchbase offers multiple benchmarks, including TPC-C, that can be run against different databases. We have a sample config and ddl files added to the repository that will allow you to run TPC-C benchmarks against an Aurora DSQL cluster.
+
+1. Edit the `config/auroradsql/sample_tpcc_config.xml file`:
+
+This file contains various settings that can be changed based on how users want to run the benchmarking test. Before loading any data into the table, replace *localhost* in the `<url></url>` tag with your Aurora DSQL cluster endpoint.
+
+Next, set the username and the password inside the `<username></username>` and `<password></password>` tags. If you don’t know how to generate a password token, follow this guide [LINK to token generation].
+
+We have also added automatic password/token generation using IAM authentication in our custom Benchbase implementation. To use it, simply leave the `<password></password>` field empty. To understand where the credentials and region information are fetched from, checkout these libraries:
+- [DefaultCredentialsProvider](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/auth/credentials/DefaultCredentialsProvider.html)
+- [DefaultAwsRegionProviderChain](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/regions/providers/DefaultAwsRegionProviderChain.html)
+
+Finally, set the `<scalefactor></scalefactor>` to the number of TPC-C warehouses you would like to create and run the benchmarking on.
+
+2. Save the config file and run the following command to create tables and load data:
+```shell
+java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=true --load=true --execute=false
 ```
 
-A full list of options can be displayed,
+We separated the loading and test execution into two steps. You can set the `--execute` flag to true and have the benchmarking run right after the loading is completed.
 
-```bash
-java -jar benchbase.jar -h
+
+Step 3: Running TPC-C and Interpreting Results
+
+1. Run the benchmark using the following command:
+
+```shell
+java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=false --load=false --execute=true
 ```
+
+Once the workload has finished running, Benchbase will output the results in the terminal, a bunch of .csv files in the results folder and a summary.json file in the same folder. The json file (for a 1 warehouse run) will look something like this:
+```json
+{
+ "Start timestamp (milliseconds)": 1731548786702,
+ "Current Timestamp (milliseconds)": 1731548847872,
+ "Elapsed Time (nanoseconds)": 60000083167,
+ "DBMS Type": "AURORADSQL",
+ "DBMS Version": null,
+ "Benchmark Type": "tpcc",
+ "Final State": "EXIT",
+ "Measured Requests": 201,
+ "isolation": null,
+ "scalefactor": "1",
+ "terminals": "4",
+ "Latency Distribution": {
+  "95th Percentile Latency (microseconds)": 2176054,
+  "Maximum Latency (microseconds)": 8337726,
+  "Median Latency (microseconds)": 1066925,
+  "Minimum Latency (microseconds)": 218524,
+  "25th Percentile Latency (microseconds)": 456543,
+  "90th Percentile Latency (microseconds)": 2085734,
+  "99th Percentile Latency (microseconds)": 3827992,
+  "75th Percentile Latency (microseconds)": 1747994,
+  "Average Latency (microseconds)": 1185045
+ },
+ "Throughput (requests/second)": 3.349995356515603,
+ "Goodput (requests/second)": 3.2999954258213404
+}
+```
+
+This result indicates that the test ran for `60` seconds and processed `201` transactions. `201` was our `tpmC`, the number of new orders processed in a minute. If we were to run the test for longer than 60 seconds, you would calculate the tpmC by multiplying the `Throughput * 60`.
+
+Checkout the TPC-C documentation to understand how the Tpmc is calculated: https://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf
+
+### Step 4: Clean Up
+
+When you are done testing your DSQL cluster.
+
+1. Run the following commands to clean up the package:
+```shell
+cd ../..
+./mvnw clean
+```
+
+2. Drop the tables created by the TPC-C workload or delete your cluster by following this guide [LINK on how to delete your DSQL cluster]
+
 
 ---
 
@@ -213,25 +280,7 @@ To modify the logging level you can update [`logging.properties`](src/main/resou
 
 [Github Codespaces](https://github.com/features/codespaces) and [VSCode devcontainer](https://code.visualstudio.com/docs/remote/containers) support is also available.
 
-### How to Add Support for a New Database
-
-Please see the existing MySQL and PostgreSQL code for an example.
-
 ---
-
-## Contributing
-
-We welcome all contributions! Please open a [pull request](https://github.com/cmu-db/benchbase/pulls). Common contributions may include:
-
-- Adding support for a new DBMS.
-- Adding more tests of existing benchmarks.
-- Fixing any bugs or known issues.
-
-Please see the [CONTRIBUTING.md](./CONTRIBUTING.md) for addition notes.
-
-## Known Issues
-
-Please use [GitHub's issue tracker](https://github.com/cmu-db/benchbase/issues) for all issues.
 
 ## Credits
 
@@ -266,24 +315,3 @@ A significant portion of the modernization was contributed by [Tim Veil @ Cockro
 * Introduced [Dependabot](https://dependabot.com/) to keep Maven dependencies up to date.
 * Simplified output flags by removing most of them, generally leaving the reporting functionality enabled by default.
 * Provided an alternate `Catalog` that can be populated directly from the configured Benchmark database. The old catalog was proxied through `HSQLDB` -- this remains an option for DBMSes that may have incomplete catalog support.
-
-## Citing This Repository
-
-If you use this repository in an academic paper, please cite this repository:
-
-> D. E. Difallah, A. Pavlo, C. Curino, and P. Cudré-Mauroux, "OLTP-Bench: An Extensible Testbed for Benchmarking Relational Databases," PVLDB, vol. 7, iss. 4, pp. 277-288, 2013.
-
-The BibTeX is provided below for convenience.
-
-```bibtex
-@article{DifallahPCC13,
-  author = {Djellel Eddine Difallah and Andrew Pavlo and Carlo Curino and Philippe Cudr{\'e}-Mauroux},
-  title = {OLTP-Bench: An Extensible Testbed for Benchmarking Relational Databases},
-  journal = {PVLDB},
-  volume = {7},
-  number = {4},
-  year = {2013},
-  pages = {277--288},
-  url = {http://www.vldb.org/pvldb/vol7/p277-difallah.pdf},
-}
-```

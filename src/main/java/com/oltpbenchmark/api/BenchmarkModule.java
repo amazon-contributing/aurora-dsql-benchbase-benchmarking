@@ -15,22 +15,32 @@
 
 package com.oltpbenchmark.api;
 
-import com.oltpbenchmark.WorkloadConfiguration;
-import com.oltpbenchmark.catalog.AbstractCatalog;
-import com.oltpbenchmark.types.DatabaseType;
-import com.oltpbenchmark.util.ClassUtil;
-import com.oltpbenchmark.util.SQLUtil;
-import com.oltpbenchmark.util.ScriptRunner;
-import com.oltpbenchmark.util.ThreadUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.oltpbenchmark.WorkloadConfiguration;
+import com.oltpbenchmark.catalog.AbstractCatalog;
+import com.oltpbenchmark.types.DatabaseType;
+import com.oltpbenchmark.util.ClassUtil;
+import com.oltpbenchmark.util.ConnectionUtil;
+import com.oltpbenchmark.util.IAMUtil;
+import com.oltpbenchmark.util.SQLUtil;
+import com.oltpbenchmark.util.ScriptRunner;
+import com.oltpbenchmark.util.ThreadUtil;
 
 /** Base class for all benchmark implementations */
 public abstract class BenchmarkModule {
@@ -78,6 +88,16 @@ public abstract class BenchmarkModule {
   // --------------------------------------------------------------------------
 
   public final Connection makeConnection() throws SQLException {
+
+    /** For DSQL, generate password token using IAM auth if one isn't provided. */
+    if (StringUtils.isEmpty(workConf.getPassword())
+        && !StringUtils.isEmpty(workConf.getUsername())
+        && workConf.getDatabaseType() == DatabaseType.AURORADSQL) {
+      return DriverManager.getConnection(
+          workConf.getUrl(),
+          workConf.getUsername(),
+          IAMUtil.generateAuroraDsqlPasswordToken(workConf.getUrl(), workConf.getUsername()));
+    }
 
     if (StringUtils.isEmpty(workConf.getUsername())) {
       return DriverManager.getConnection(workConf.getUrl());
@@ -196,7 +216,7 @@ public abstract class BenchmarkModule {
         LOG.error(throwables.getMessage(), throwables);
       }
     }
-    try (Connection conn = this.makeConnection()) {
+    try (Connection conn = ConnectionUtil.makeConnectionWithRetry(this)) {
       this.catalog =
           SQLUtil.getCatalog(this, this.getWorkloadConfiguration().getDatabaseType(), conn);
     }
@@ -207,7 +227,7 @@ public abstract class BenchmarkModule {
    * (e.g., table, indexes, etc) needed for this benchmark
    */
   public final void createDatabase() throws SQLException, IOException {
-    try (Connection conn = this.makeConnection()) {
+    try (Connection conn = ConnectionUtil.makeConnectionWithRetry(this)) {
       this.createDatabase(this.workConf.getDatabaseType(), conn);
     }
   }
@@ -234,7 +254,7 @@ public abstract class BenchmarkModule {
   }
 
   public final void runScript(String scriptPath) throws SQLException, IOException {
-    try (Connection conn = this.makeConnection()) {
+    try (Connection conn = ConnectionUtil.makeConnectionWithRetry(this)) {
       DatabaseType dbType = this.workConf.getDatabaseType();
       ScriptRunner runner = new ScriptRunner(conn, true, true);
       LOG.debug("Executing script [{}] for database type [{}]", scriptPath, dbType);
@@ -283,7 +303,7 @@ public abstract class BenchmarkModule {
 
   public final void clearDatabase() throws SQLException {
 
-    try (Connection conn = this.makeConnection()) {
+    try (Connection conn = ConnectionUtil.makeConnectionWithRetry(this)) {
       Loader<? extends BenchmarkModule> loader = this.makeLoaderImpl();
       if (loader != null) {
         conn.setAutoCommit(false);

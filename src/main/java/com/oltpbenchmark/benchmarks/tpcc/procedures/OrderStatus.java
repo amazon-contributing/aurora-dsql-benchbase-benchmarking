@@ -17,12 +17,6 @@
 
 package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
-import com.oltpbenchmark.api.SQLStmt;
-import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
-import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
-import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
-import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
-import com.oltpbenchmark.benchmarks.tpcc.pojo.Oorder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,8 +24,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
+import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
+import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
+import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
+import com.oltpbenchmark.benchmarks.tpcc.pojo.Oorder;
 
 public class OrderStatus extends TPCCProcedure {
 
@@ -192,7 +194,7 @@ public class OrderStatus extends TPCCProcedure {
                   "No order records for CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]",
                   w_id, d_id, c.c_id);
 
-          throw new RuntimeException(msg);
+          throw new UserAbortException(msg);
         }
         Oorder o = new Oorder();
         o.o_id = rs.getInt("O_ID");
@@ -266,7 +268,7 @@ public class OrderStatus extends TPCCProcedure {
               String.format(
                   "Failed to get CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]", c_w_id, c_d_id, c_id);
 
-          throw new RuntimeException(msg);
+          throw new UserAbortException(msg);
         }
 
         Customer c = TPCCUtil.newCustomerFromResults(rs);
@@ -304,7 +306,7 @@ public class OrderStatus extends TPCCProcedure {
           String.format(
               "Failed to get CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_LAST=%s]", c_w_id, c_d_id, c_last);
 
-      throw new RuntimeException(msg);
+      throw new UserAbortException(msg);
     }
 
     // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but

@@ -17,16 +17,22 @@
 
 package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
-import java.math.BigDecimal;
-import java.sql.*;
-import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Delivery extends TPCCProcedure {
 
@@ -232,7 +238,7 @@ public class Delivery extends TPCCProcedure {
               String.format(
                   "Failed to retrieve ORDER record [W_ID=%d, D_ID=%d, O_ID=%d]",
                   w_id, d_id, no_o_id);
-          throw new RuntimeException(msg);
+          throw new UserAbortException(msg);
         }
 
         return rs.getInt("O_C_ID");
@@ -255,7 +261,7 @@ public class Delivery extends TPCCProcedure {
         String msg =
             String.format(
                 "Failed to update ORDER record [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
-        throw new RuntimeException(msg);
+        throw new UserAbortException(msg);
       }
     }
   }
@@ -278,7 +284,7 @@ public class Delivery extends TPCCProcedure {
             String.format(
                 "Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
                 w_id, d_id, no_o_id);
-        throw new RuntimeException(msg);
+        throw new UserAbortException(msg);
       }
     }
   }
@@ -297,7 +303,7 @@ public class Delivery extends TPCCProcedure {
               String.format(
                   "Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]",
                   w_id, d_id, no_o_id);
-          throw new RuntimeException(msg);
+          throw new UserAbortException(msg);
         }
 
         return rs.getFloat("OL_TOTAL");
@@ -321,7 +327,7 @@ public class Delivery extends TPCCProcedure {
         String msg =
             String.format(
                 "Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]", w_id, d_id, c_id);
-        throw new RuntimeException(msg);
+        throw new UserAbortException(msg);
       }
     }
   }

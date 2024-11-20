@@ -17,17 +17,19 @@
 
 package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
-import com.oltpbenchmark.api.SQLStmt;
-import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
-import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
-import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
+import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
+import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 
 public class StockLevel extends TPCCProcedure {
 
@@ -100,7 +102,7 @@ public class StockLevel extends TPCCProcedure {
       try (ResultSet rs = stockGetDistOrderId.executeQuery()) {
 
         if (!rs.next()) {
-          throw new RuntimeException("D_W_ID=" + w_id + " D_ID=" + d_id + " not found!");
+          throw new UserAbortException("D_W_ID=" + w_id + " D_ID=" + d_id + " not found!");
         }
         return rs.getInt("D_NEXT_O_ID");
       }
@@ -125,7 +127,7 @@ public class StockLevel extends TPCCProcedure {
                   "Failed to get StockLevel result for COUNT query [W_ID=%d, D_ID=%d, O_ID=%d]",
                   w_id, d_id, o_id);
 
-          throw new RuntimeException(msg);
+          throw new UserAbortException(msg);
         }
 
         return rs.getInt("STOCK_COUNT");

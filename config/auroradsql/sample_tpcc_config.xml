@@ -6,9 +6,21 @@
     <driver>org.postgresql.Driver</driver>
     <url>jdbc:postgresql://localhost:5432/postgres?sslmode=require&amp;ApplicationName=tpcc&amp;reWriteBatchedInserts=true</url>
     <username>admin</username>
+    <!-- Extra Feature -->
+    <!-- If the password isn't provided, Benchbase will attempt generating -->
+    <!-- the aurora dsql token using AWS's DefaultCredentialsProvider and -->
+    <!-- DefaultAwsRegionProviderChain. If no region is found, the default -->
+    <!-- will be US_EAST_1. Check out the following documentations on how -->
+    <!-- Provider classes fetch the credentials and the region: -->
+    <!-- 1. https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/auth/credentials/DefaultCredentialsProvider.html -->
+    <!-- 2. https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/regions/providers/DefaultAwsRegionProviderChain.html -->
+    <!-- If the username provided is 'admin', the token will be generated for an -->
+    <!-- admin user. This feature assumes the correct connection url is provided. -->
+    <!--<password></password>-->
     <password>password</password>
     <reconnectOnConnectionFailure>true</reconnectOnConnectionFailure>
     <batchsize>128</batchsize>
+    <retries>4</retries>
 
     <!-- Scale factor is the number of warehouses in TPCC -->
     <scalefactor>1</scalefactor>

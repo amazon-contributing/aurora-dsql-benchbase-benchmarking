@@ -351,6 +351,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.14.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.immutables</groupId>
             <artifactId>value</artifactId>
             <version>2.10.1</version>
@@ -370,6 +376,39 @@
             <version>3.1.12</version>
         </dependency>
 
+        <!-- For Aurora Dsql Token Generation -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>http-auth-aws</artifactId>
+            <version>2.25.28</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>2.25.28</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>regions</artifactId>
+            <version>2.25.28</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sdk-core</artifactId>
+            <version>2.25.28</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>http-client-spi</artifactId>
+            <version>2.25.28</version>
+        </dependency>
+
+        <!-- For Aurora Dsql Token Generation -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.2.1-jre</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -546,7 +585,11 @@
                                 <ignoredUnusedDeclaredDependency>org.apache.phoenix:phoenix-client-hbase-2.4:jar</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.microsoft.sqlserver:mssql-jdbc:jar</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.xerial:sqlite-jdbc:jar</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>software.amazon.awssdk:http-auth-aws:jar</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
+                            <ignoredNonTestScopedDependencies>
+                                <ignoredNonTestScopedDependency>org.mockito:mockito-core:jar</ignoredNonTestScopedDependency>
+                            </ignoredNonTestScopedDependencies>
                         </configuration>
                     </execution>
                 </executions>

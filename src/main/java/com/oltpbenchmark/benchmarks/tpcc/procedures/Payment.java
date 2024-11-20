@@ -17,6 +17,18 @@
 
 package com.oltpbenchmark.benchmarks.tpcc.procedures;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConfig;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
@@ -25,12 +37,6 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Customer;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.District;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Warehouse;
-import java.math.BigDecimal;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Payment extends TPCCProcedure {
 
@@ -315,7 +321,7 @@ public class Payment extends TPCCProcedure {
       // t1: read w_id = x; t2: update w_id = x; t1 update w_id = x
       int result = payUpdateWhse.executeUpdate();
       if (result == 0) {
-        throw new RuntimeException("W_ID=" + w_id + " not found!");
+        throw new UserAbortException("W_ID=" + w_id + " not found!");
       }
     }
   }
@@ -326,7 +332,7 @@ public class Payment extends TPCCProcedure {
 
       try (ResultSet rs = payGetWhse.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException("W_ID=" + w_id + " not found!");
+          throw new UserAbortException("W_ID=" + w_id + " not found!");
         }
 
         Warehouse w = new Warehouse();
@@ -385,7 +391,7 @@ public class Payment extends TPCCProcedure {
       int result = payUpdateDist.executeUpdate();
 
       if (result == 0) {
-        throw new RuntimeException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
+        throw new UserAbortException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
       }
     }
   }
@@ -397,7 +403,7 @@ public class Payment extends TPCCProcedure {
 
       try (ResultSet rs = payGetDist.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
+          throw new UserAbortException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
         }
 
         District d = new District();
@@ -430,7 +436,7 @@ public class Payment extends TPCCProcedure {
       payGetCustCdata.setInt(3, c.c_id);
       try (ResultSet rs = payGetCustCdata.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException(
+          throw new UserAbortException(
               "C_ID="
                   + c.c_id
                   + " C_W_ID="
@@ -480,7 +486,7 @@ public class Payment extends TPCCProcedure {
       int result = payUpdateCustBalCdata.executeUpdate();
 
       if (result == 0) {
-        throw new RuntimeException(
+        throw new UserAbortException(
             "Error in PYMNT Txn updating Customer C_ID="
                 + c.c_id
                 + " C_W_ID="
@@ -507,7 +513,7 @@ public class Payment extends TPCCProcedure {
       int result = payUpdateCustBal.executeUpdate();
 
       if (result == 0) {
-        throw new RuntimeException(
+        throw new UserAbortException(
             "C_ID="
                 + c.c_id
                 + " C_W_ID="
@@ -564,7 +570,7 @@ public class Payment extends TPCCProcedure {
 
       try (ResultSet rs = payGetCust.executeQuery()) {
         if (!rs.next()) {
-          throw new RuntimeException(
+          throw new UserAbortException(
               "C_ID=" + c_id + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
         }
 
@@ -602,7 +608,7 @@ public class Payment extends TPCCProcedure {
     }
 
     if (customers.size() == 0) {
-      throw new RuntimeException(
+      throw new UserAbortException(
           "C_LAST=" + customerLastName + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
     }
 
