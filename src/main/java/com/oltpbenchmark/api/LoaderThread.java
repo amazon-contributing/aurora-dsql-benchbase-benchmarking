@@ -17,13 +17,11 @@
 
 package com.oltpbenchmark.api;
 
+import com.oltpbenchmark.util.ConnectionUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.oltpbenchmark.util.ConnectionUtil;
 
 /**
  * A LoaderThread is responsible for loading some portion of a benchmark's database. Note that each

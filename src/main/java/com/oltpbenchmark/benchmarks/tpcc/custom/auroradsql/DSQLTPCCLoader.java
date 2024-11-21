@@ -38,6 +38,7 @@ import com.oltpbenchmark.util.SQLUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -75,6 +76,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
   public List<LoaderThread> createLoaderThreads() {
     List<LoaderThread> threads = new ArrayList<>();
     final CountDownLatch itemLatch = new CountDownLatch(1);
+    final CountDownLatch warehouseLatch = new CountDownLatch((int) this.numWarehouses);
 
     // ITEM
     // This will be invoked first and executed in a single thread.
@@ -174,11 +176,51 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
             @Override
             public void afterLoad() {
+              warehouseLatch.countDown();
               logProgress(warehousesLoaded.incrementAndGet(), numWarehouses);
             }
           };
       threads.add(t);
     }
+
+    // POST LOAD ANALYZE
+    // This will run analyze on all the Tables in TPCC.
+    threads.add(
+        new LoaderThread(this.benchmark) {
+          @Override
+          public void load(Connection conn) {
+            String[] tableNames =
+                new String[] {
+                  TPCCConstants.TABLENAME_ITEM,
+                  TPCCConstants.TABLENAME_WAREHOUSE,
+                  TPCCConstants.TABLENAME_STOCK,
+                  TPCCConstants.TABLENAME_DISTRICT,
+                  TPCCConstants.TABLENAME_CUSTOMER,
+                  TPCCConstants.TABLENAME_HISTORY,
+                  TPCCConstants.TABLENAME_OPENORDER,
+                  TPCCConstants.TABLENAME_NEWORDER,
+                  TPCCConstants.TABLENAME_ORDERLINE
+                };
+            LOG.info("Running ANALYZE on all tables...");
+            runAnalyze(conn, tableNames);
+          }
+
+          @Override
+          public void beforeLoad() {
+            // Make sure that we load the all the warehouses and their data first
+            try {
+              warehouseLatch.await();
+            } catch (InterruptedException ex) {
+              throw new RuntimeException(ex);
+            }
+          }
+
+          @Override
+          public void afterLoad() {
+            LOG.info("ANALYZE complete!");
+          }
+        });
+
     return (threads);
   }
 
@@ -196,7 +238,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
    * function returns the last successful connection to the db in
    * order to allow the next loader in the same thread to re-use it.
    */
-  private Connection executeStatmentWithRetry(
+  private Connection executeInsertStatmentWithRetry(
       Connection conn, Consumer<PreparedStatement> insertCallable, String tableName) {
     int attempts = 0;
     PreparedStatement stmt;
@@ -241,6 +283,66 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
           conn = newConnection;
         } catch (SQLException se) {
           throw new RuntimeException("Failed to create connection while retrying data load ", se);
+        }
+      }
+    }
+    return conn;
+  }
+
+  /*
+   * This custom function keeps retrying simple statements until
+   * the load succeeds or the attempts reach the max retry count.
+   * Since new connections are created at each retry attempt, the
+   * function returns the last successful connection to the db in
+   * order to allow the next loader in the same thread to re-use it.
+   */
+  private Connection executeStatmentWithRetry(Connection conn, Consumer<Statement> callable) {
+    int attempts = 0;
+    Statement stmt;
+    while (attempts <= this.workConf.getMaxRetries()) {
+      try {
+        stmt = conn.createStatement();
+        callable.accept(stmt);
+        return conn;
+      } catch (Exception e) {
+        final Throwable t = e.getCause();
+        if (isDuplicateKeyException(t)) {
+          LOG.warn("Skipping sql execution due to duplicate key violation");
+          return conn;
+        }
+
+        attempts++;
+        if (attempts >= this.workConf.getMaxRetries()) {
+          throw new RuntimeException("Execution attempts exhausted", e);
+        }
+
+        LOG.warn(
+            "[Attempt: "
+                + attempts
+                + "]SQL statement execution failed with exception, retrying...");
+
+        // Wait before retrying
+        try {
+          // Exponential delay with jitter
+          long delay = calExpDelay(attempts);
+          Thread.sleep(delay);
+        } catch (InterruptedException ie) {
+          throw new RuntimeException("Interrupted while retrying SQL statement execution", ie);
+        }
+
+        // Replace old Connection with new Connection
+        // And Close previous connection and prepared statement
+        try {
+          Connection newConnection = ConnectionUtil.makeConnectionWithRetry(this.benchmark);
+
+          if (!conn.isClosed()) {
+            conn.close();
+          }
+
+          conn = newConnection;
+        } catch (SQLException se) {
+          throw new RuntimeException(
+              "Failed to create connection while retrying SQL statement ", se);
         }
       }
     }
@@ -321,7 +423,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
       if (items.size() == workConf.getBatchSize()) {
         conn =
-            executeStatmentWithRetry(
+            executeInsertStatmentWithRetry(
                 conn,
                 (stmt) -> {
                   insertItems(items, stmt);
@@ -333,7 +435,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!items.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertItems(items, stmt);
@@ -379,7 +481,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
     warehouse.w_zip = "123456789";
 
     conn =
-        executeStatmentWithRetry(
+        executeInsertStatmentWithRetry(
             conn,
             (stmt) -> {
               insertWarehouse(warehouse, stmt);
@@ -440,7 +542,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
       if (stocks.size() == workConf.getBatchSize()) {
         conn =
-            executeStatmentWithRetry(
+            executeInsertStatmentWithRetry(
                 conn,
                 (stmt) -> {
                   insertStock(stocks, stmt);
@@ -452,7 +554,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!stocks.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertStock(stocks, stmt);
@@ -513,7 +615,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
       district.d_zip = "123456789";
 
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertDistrict(district, stmt);
@@ -593,7 +695,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
         if (customers.size() == workConf.getBatchSize()) {
           conn =
-              executeStatmentWithRetry(
+              executeInsertStatmentWithRetry(
                   conn,
                   (stmt) -> {
                     insertCustomer(customers, stmt);
@@ -606,7 +708,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!customers.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertCustomer(customers, stmt);
@@ -676,7 +778,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
         if (historyList.size() == workConf.getBatchSize()) {
           conn =
-              executeStatmentWithRetry(
+              executeInsertStatmentWithRetry(
                   conn,
                   (stmt) -> {
                     insertCustomerHistory(historyList, stmt);
@@ -689,7 +791,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!historyList.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertCustomerHistory(historyList, stmt);
@@ -767,7 +869,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
         if (oorders.size() == workConf.getBatchSize()) {
           conn =
-              executeStatmentWithRetry(
+              executeInsertStatmentWithRetry(
                   conn,
                   (stmt) -> {
                     insertOpenOrders(oorders, stmt);
@@ -780,7 +882,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!oorders.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertOpenOrders(oorders, stmt);
@@ -852,7 +954,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
         if (newOrders.size() == workConf.getBatchSize()) {
           conn =
-              executeStatmentWithRetry(
+              executeInsertStatmentWithRetry(
                   conn,
                   (stmt) -> {
                     insertNewOrder(newOrders, stmt);
@@ -865,7 +967,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!newOrders.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertNewOrder(newOrders, stmt);
@@ -930,7 +1032,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
           if (orderLines.size() == workConf.getBatchSize()) {
             conn =
-                executeStatmentWithRetry(
+                executeInsertStatmentWithRetry(
                     conn,
                     (stmt) -> {
                       insertOrderLine(orderLines, stmt);
@@ -944,7 +1046,7 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
     if (!orderLines.isEmpty()) {
       conn =
-          executeStatmentWithRetry(
+          executeInsertStatmentWithRetry(
               conn,
               (stmt) -> {
                 insertOrderLine(orderLines, stmt);
@@ -981,6 +1083,26 @@ public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
       orderLineStatement.clearBatch();
     } catch (SQLException sqlException) {
       throw new RuntimeException("Failed to insert orderline", sqlException);
+    }
+  }
+
+  private Connection runAnalyze(Connection conn, String[] tableNames) {
+    for (String tableName : tableNames) {
+      conn =
+          executeStatmentWithRetry(
+              conn,
+              (stmt) -> {
+                analyzeTables(stmt, tableName);
+              });
+    }
+    return conn;
+  }
+
+  private void analyzeTables(Statement stmt, String tableName) {
+    try {
+      stmt.execute("ANALYZE " + tableName);
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to run ANALYZE on table: " + tableName);
     }
   }
 }

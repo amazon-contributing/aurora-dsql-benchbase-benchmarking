@@ -15,6 +15,15 @@
 
 package com.oltpbenchmark.api;
 
+import com.oltpbenchmark.WorkloadConfiguration;
+import com.oltpbenchmark.catalog.AbstractCatalog;
+import com.oltpbenchmark.types.DatabaseType;
+import com.oltpbenchmark.util.ClassUtil;
+import com.oltpbenchmark.util.ConnectionUtil;
+import com.oltpbenchmark.util.IAMUtil;
+import com.oltpbenchmark.util.SQLUtil;
+import com.oltpbenchmark.util.ScriptRunner;
+import com.oltpbenchmark.util.ThreadUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -27,20 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.oltpbenchmark.WorkloadConfiguration;
-import com.oltpbenchmark.catalog.AbstractCatalog;
-import com.oltpbenchmark.types.DatabaseType;
-import com.oltpbenchmark.util.ClassUtil;
-import com.oltpbenchmark.util.ConnectionUtil;
-import com.oltpbenchmark.util.IAMUtil;
-import com.oltpbenchmark.util.SQLUtil;
-import com.oltpbenchmark.util.ScriptRunner;
-import com.oltpbenchmark.util.ThreadUtil;
 
 /** Base class for all benchmark implementations */
 public abstract class BenchmarkModule {
