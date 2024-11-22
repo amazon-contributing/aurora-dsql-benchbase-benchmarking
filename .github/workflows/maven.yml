@@ -373,7 +373,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        benchmark: [ 'auctionmark', 'chbenchmark', 'epinions', 'hyadapt', 'noop', 'otmetrics', 'resourcestresser', 'seats', 'sibench', 'smallbank', 'tatp', 'templated', 'tpcc', 'tpcc-with-reconnects', 'tpch', 'twitter', 'voter', 'wikipedia', 'ycsb' ]
+        # Disabled 'tpcc-with-reconnect' because of DSQL custom reconnection attempts
+        benchmark: [ 'auctionmark', 'chbenchmark', 'epinions', 'hyadapt', 'noop', 'otmetrics', 'resourcestresser', 'seats', 'sibench', 'smallbank', 'tatp', 'templated', 'tpcc', 'tpch', 'twitter', 'voter', 'wikipedia', 'ycsb' ]
     services:
       oracle:
         image: gvenzl/oracle-xe:21.3.0-slim-faststart
