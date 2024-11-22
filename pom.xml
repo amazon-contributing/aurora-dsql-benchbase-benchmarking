@@ -403,11 +403,16 @@
             <version>2.25.28</version>
         </dependency>
 
-        <!-- For Aurora Dsql Token Generation -->
+        <!-- For Rate Limiter -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>33.2.1-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
     </dependencies>
 
