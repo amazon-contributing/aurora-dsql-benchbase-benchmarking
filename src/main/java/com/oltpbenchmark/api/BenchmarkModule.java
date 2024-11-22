@@ -89,12 +89,13 @@ public abstract class BenchmarkModule {
 
     /** For DSQL, generate password token using IAM auth if one isn't provided. */
     if (StringUtils.isEmpty(workConf.getPassword())
-        && !StringUtils.isEmpty(workConf.getUsername())
         && workConf.getDatabaseType() == DatabaseType.AURORADSQL) {
+      String username =
+          StringUtils.isEmpty(workConf.getUsername()) ? "admin" : workConf.getUsername();
       return DriverManager.getConnection(
           workConf.getUrl(),
-          workConf.getUsername(),
-          IAMUtil.generateAuroraDsqlPasswordToken(workConf.getUrl(), workConf.getUsername()));
+          username,
+          IAMUtil.generateAuroraDsqlPasswordToken(workConf.getUrl(), username));
     }
 
     if (StringUtils.isEmpty(workConf.getUsername())) {
