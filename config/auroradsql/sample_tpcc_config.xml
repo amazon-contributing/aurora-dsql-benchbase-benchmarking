@@ -7,7 +7,7 @@
     <url>jdbc:postgresql://localhost:5432/postgres?sslmode=require&amp;ApplicationName=tpcc&amp;reWriteBatchedInserts=true</url>
 
     <!-- Extra Feature -->
-    <!-- If username isn't provided, "admin" is assumed. -->
+    <!-- If username isn't provided, "admin" is used by default. -->
     <!-- If the password isn't provided, Benchbase will attempt generating -->
     <!-- the aurora dsql token using AWS's DefaultCredentialsProvider and -->
     <!-- DefaultAwsRegionProviderChain. If no region is found, the default -->
