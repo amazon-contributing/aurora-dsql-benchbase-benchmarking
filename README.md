@@ -14,7 +14,7 @@ BenchBase (formerly [OLTPBench](https://github.com/oltpbenchmark/oltpbench/)) is
 
 ### Step 1: Setting up Benchbase
 
-1. This is a forked version of the original Benchbase repository that can be pulled from the amazon-contributing github repo using the following command:
+1. We will be using a forked version of the original Benchbase repository that can be pulled from the amazon-contributing github repo using the following command:
 
 ```bash
 git clone --depth 1 https://github.com/amazon-contributing/aurora-dsql-benchbase-benchmarking.git
@@ -30,30 +30,30 @@ tar xvzf benchbase-auroradsql.tgz
 cd benchbase-auroradsql
 ```
 
-
-
 ### Step 2: Loading TPC-C data
 
-Benchbase offers multiple benchmarks, including TPC-C, that can be run against different databases. We have a sample config and ddl files added to the repository that will allow you to run TPC-C benchmarks against an Aurora DSQL cluster.
+We have added sample configuration and ddl files to the repository, allowing you to run TPC-C benchmarks against an Aurora DSQL cluster.
 
 1. Edit the `config/auroradsql/sample_tpcc_config.xml file`:
 
-This file contains various settings that can be changed based on how users want to run the benchmarking test. Before loading any data into the table, replace *localhost* in the `<url></url>` tag with your Aurora DSQL cluster endpoint.
+This file contains various settings that can be adjusted based on how users want to run the benchmarking test. Before loading any data into the table, replace `localhost` in the `<url></url>` tag with your Aurora DSQL cluster endpoint.
 
-Next, set the username and the password inside the `<username></username>` and `<password></password>` tags. If you don’t know how to generate a password token, follow this guide [LINK to token generation].
+Next, set the username and the password token inside the `<username></username>` and `<password></password>` tags. If you don’t know how to generate a password token, follow this guide [LINK to token generation].
 
 We have also added automatic password/token generation using IAM authentication in our custom Benchbase implementation. To use it, simply leave the `<password></password>` field empty. To understand where the credentials and region information are fetched from, checkout these libraries:
 - [DefaultCredentialsProvider](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/auth/credentials/DefaultCredentialsProvider.html)
 - [DefaultAwsRegionProviderChain](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/regions/providers/DefaultAwsRegionProviderChain.html)
 
-Finally, set the `<scalefactor></scalefactor>` to the number of TPC-C warehouses you would like to create and run the benchmarking on.
+Set the `<scalefactor></scalefactor>` to the number of TPC-C warehouses you would like to create and run the benchmark on.
+
+Finally, set the workload parameters. These settings will be used by the workload in the next step. Change the number of `<terminals></terminals>` to determine how many concurrent connections to make. These connections are evenly spread over the number of warehouses. Note that more terminals mean more memory usage.
 
 2. Save the config file and run the following command to create tables and load data:
 ```shell
 java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=true --load=true --execute=false
 ```
 
-We separated the loading and test execution into two steps. You can set the `--execute` flag to true and have the benchmarking run right after the loading is completed.
+We separated the loading and test execution into two steps. You can set the `--execute` flag to `true` to have the benchmarking run immediately after the data is loaded.
 
 
 Step 3: Running TPC-C and Interpreting Results
@@ -64,39 +64,51 @@ Step 3: Running TPC-C and Interpreting Results
 java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=false --load=false --execute=true
 ```
 
-Once the workload has finished running, Benchbase will output the results in the terminal, a bunch of .csv files in the results folder and a summary.json file in the same folder. The json file (for a 1 warehouse run) will look something like this:
-```json
-{
- "Start timestamp (milliseconds)": 1731548786702,
- "Current Timestamp (milliseconds)": 1731548847872,
- "Elapsed Time (nanoseconds)": 60000083167,
- "DBMS Type": "AURORADSQL",
- "DBMS Version": null,
- "Benchmark Type": "tpcc",
- "Final State": "EXIT",
- "Measured Requests": 201,
- "isolation": null,
- "scalefactor": "1",
- "terminals": "4",
- "Latency Distribution": {
-  "95th Percentile Latency (microseconds)": 2176054,
-  "Maximum Latency (microseconds)": 8337726,
-  "Median Latency (microseconds)": 1066925,
-  "Minimum Latency (microseconds)": 218524,
-  "25th Percentile Latency (microseconds)": 456543,
-  "90th Percentile Latency (microseconds)": 2085734,
-  "99th Percentile Latency (microseconds)": 3827992,
-  "75th Percentile Latency (microseconds)": 1747994,
-  "Average Latency (microseconds)": 1185045
- },
- "Throughput (requests/second)": 3.349995356515603,
- "Goodput (requests/second)": 3.2999954258213404
-}
+Once the workload has finished running, Benchbase will output a histogram in the terminal,  several `.csv` files in the results folder and a `summary.json` file in the same folder. For a 1-warehouse run with 10 terminals, the histogram might look like this:
+
+```shell
+[INFO ] 2024-11-21 19:10:23,042 [main]  com.oltpbenchmark.DBWorkload runWorkload - ======================================================================
+[INFO ] 2024-11-21 19:10:23,043 [main]  com.oltpbenchmark.DBWorkload runWorkload - Rate limited reqs/s: Results(state=EXIT, nanoSeconds=60999908412, measuredRequests=3168) = 51.93450420618642 requests/sec (throughput), 52.24598008368564 requests/sec (goodput)
+[INFO ] 2024-11-21 19:10:23,049 [main]  com.oltpbenchmark.DBWorkload writeOutputs - Output Raw data into file: tpcc_2024-11-21_19-10-23.raw.csv
+[INFO ] 2024-11-21 19:10:23,081 [main]  com.oltpbenchmark.DBWorkload writeOutputs - Output samples into file: tpcc_2024-11-21_19-10-23.samples.csv
+[INFO ] 2024-11-21 19:10:23,088 [main]  com.oltpbenchmark.DBWorkload writeOutputs - Output summary data into file: tpcc_2024-11-21_19-10-23.summary.json
+[INFO ] 2024-11-21 19:10:23,096 [main]  com.oltpbenchmark.DBWorkload writeOutputs - Output DBMS parameters into file: tpcc_2024-11-21_19-10-23.params.json
+[INFO ] 2024-11-21 19:10:23,096 [main]  com.oltpbenchmark.DBWorkload writeOutputs - Output benchmark config into file: tpcc_2024-11-21_19-10-23.config.xml
+[INFO ] 2024-11-21 19:10:23,131 [main]  com.oltpbenchmark.DBWorkload writeOutputs - Output results into file: tpcc_2024-11-21_19-10-23.results.csv with window size 5
+[INFO ] 2024-11-21 19:10:23,149 [main]  com.oltpbenchmark.DBWorkload writeHistograms - ======================================================================
+[INFO ] 2024-11-21 19:10:23,149 [main]  com.oltpbenchmark.DBWorkload writeHistograms - Workload Histograms:
+
+Completed Transactions:
+com.oltpbenchmark.benchmarks.tpcc.procedures.NewOrder/01                         [1473]
+com.oltpbenchmark.benchmarks.tpcc.procedures.Payment/02                          [1330] *
+com.oltpbenchmark.benchmarks.tpcc.procedures.OrderStatus/03                      [ 136] *
+com.oltpbenchmark.benchmarks.tpcc.procedures.Delivery/04                         [ 130] *
+com.oltpbenchmark.benchmarks.tpcc.procedures.StockLevel/05                       [ 118] *
+
+Aborted Transactions:
+com.oltpbenchmark.benchmarks.tpcc.procedures.NewOrder/01                         [  15]
+
+Rejected Transactions (Server Retry):
+com.oltpbenchmark.benchmarks.tpcc.procedures.NewOrder/01                         [  91] *
+com.oltpbenchmark.benchmarks.tpcc.procedures.Payment/02                          [3468]
+com.oltpbenchmark.benchmarks.tpcc.procedures.Delivery/04                         [ 173] **
+
+Rejected Transactions (Retry Different):
+<EMPTY>
+
+Unexpected SQL Errors:
+<EMPTY>
+
+Unknown Status Transactions:
+<EMPTY>
+
+
+[INFO ] 2024-11-21 19:10:23,149 [main]  com.oltpbenchmark.DBWorkload writeHistograms - ======================================================================
 ```
 
-This result indicates that the test ran for `60` seconds and processed `201` transactions. `201` was our `tpmC`, the number of new orders processed in a minute. If we were to run the test for longer than 60 seconds, you would calculate the tpmC by multiplying the `Throughput * 60`.
+This result indicates that the test ran for `60 seconds` and processed `3168 transactions`, of which `1473` were New Order transactions. The number of New Order transactions is your `tpmC`. If the test runs for longer than 60 seconds, you can calculate the tpmC by dividing the number of completed `New Order Transactions / the test duration in minutes`.
 
-Checkout the TPC-C documentation to understand how the Tpmc is calculated: https://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf
+(Checkout the TPC-C documentation to understand how the Tpmc is calculated: https://www.tpc.org/tpc_documents_current_versions/pdf/tpc-c_v5.11.0.pdf)
 
 ### Step 4: Clean Up
 
@@ -108,8 +120,7 @@ cd ../..
 ./mvnw clean
 ```
 
-2. Drop the tables created by the TPC-C workload or delete your cluster by following this guide [LINK on how to delete your DSQL cluster]
-
+2. Delete your cluster by following this guide: [LINK on how to delete your DSQL cluster]
 
 ---
 
