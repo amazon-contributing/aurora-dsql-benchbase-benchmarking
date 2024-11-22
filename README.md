@@ -1,4 +1,4 @@
-# BenchBase Fork For DSQL
+# BenchBase Fork For Aurora DSQL
 
 BenchBase (formerly [OLTPBench](https://github.com/oltpbenchmark/oltpbench/)) is a Multi-DBMS SQL Benchmarking Framework via JDBC.
 
