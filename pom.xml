@@ -591,6 +591,7 @@
                                 <ignoredUnusedDeclaredDependency>com.microsoft.sqlserver:mssql-jdbc:jar</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.xerial:sqlite-jdbc:jar</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>software.amazon.awssdk:http-auth-aws:jar</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>com.google.code.findbugs:jsr305:jar</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                             <ignoredNonTestScopedDependencies>
                                 <ignoredNonTestScopedDependency>org.mockito:mockito-core:jar</ignoredNonTestScopedDependency>
