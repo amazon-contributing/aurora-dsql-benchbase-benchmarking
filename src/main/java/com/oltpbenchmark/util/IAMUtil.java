@@ -72,7 +72,7 @@ public class IAMUtil {
   }
 
   private static void validateUrl(String url) {
-    String regex = "(^jdbc:postgresql:\\/\\/[a-zA-Z0-9_.-]+:[0-9]{0,9}\\/[a-zA-Z]*\\\\?.+$)1?";
+    String regex = "(^jdbc:postgresql:\\/\\/[a-zA-Z0-9_.-]+(:[0-9]{1,9})?\\/[a-zA-Z]*\\\\?.+$)1?";
     if (!url.matches(regex)) {
       throw new RuntimeException("Invalid JDBC url provided!");
     }
