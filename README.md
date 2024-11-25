@@ -4,11 +4,27 @@ BenchBase (formerly [OLTPBench](https://github.com/oltpbenchmark/oltpbench/)) is
 
 **Table of Contents**
 
+- [Before you begin](#before-you-begin)
 - [Quickstart](#quickstart)
 - [Description](#description)
 - [Usage Guide](#usage-guide)
 
 ---
+
+## Before you begin
+
+### Uderstanding Benchbase: A Benchmarking Framework
+
+[Benchbase](https://github.com/cmu-db/benchbase) is an open-source benchmarking tool designed to assess the performance of relational and NoSQL databases under different workloads. It was originally developed by the Carnegie Mellon Database Group and is widely used to evaluate database systems, both in academic and industry settings. The tool simplifies the process of setting up and running benchmarks by providing a standard interface and a range of workloads, such as TPC-C, TPC-H, etc.
+
+### Install Java and Maven
+
+The benchbase package we will be using requires [Java 21](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html) and  [Maven](https://maven.apache.org/install.html).
+
+### Have a DSQL Cluster ready
+
+If you haven’t done it already, go ahead and create a cluster to use for the TPC-C benchmarking following this guide [LINK to creating clusters]
+
 
 ## Quickstart
 
