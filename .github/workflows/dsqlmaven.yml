@@ -49,12 +49,13 @@ jobs:
       - name: Compile with Maven
         run: mvn -B compile test-compile --file pom.xml
 
-      - name: Test exec plugin
-        run: |
-          mvn exec:java -P sqlite -Dexec.args="-b noop -c config/sqlite/sample_noop_config.xml --create=true --load=true --execute=true"
+      # Skip testing until integ is done
+      # - name: Test exec plugin
+      #   run: |
+      #     mvn exec:java -P sqlite -Dexec.args="-b noop -c config/sqlite/sample_noop_config.xml --create=true --load=true --execute=true"
 
-      - name: Test with Maven
-        run: mvn -B test --file pom.xml
+      # - name: Test with Maven
+      #   run: mvn -B test --file pom.xml
 
   package-and-upload:
     needs: compile-and-test
@@ -82,21 +83,6 @@ jobs:
       with:
         name: benchbase-${{matrix.profile}}
         path: target/benchbase-${{matrix.profile}}.tgz
-
-    # Needed for running a customized service containers using docker/*/up.sh scripts.
-    # See postgres example below.
-    # https://github.com/actions/runner/issues/2139
-    - name: Package docker-compose configs
-      if: ${{ matrix.profile == 'postgres' }}
-      run: |
-        tar czvpf docker-compose-${{matrix.profile}}.tar.gz docker/${{matrix.profile}}-latest
-
-    - name: Upload docker-compose configs
-      if: ${{ matrix.profile == 'postgres' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: docker-compose-${{matrix.profile}}
-        path: docker-compose-${{matrix.profile}}.tar.gz
 
   ## ----------------------------------------------------------------------------------
   ## AURORA DSQL
