@@ -6,6 +6,8 @@ on:
     # Generate new docker images on release tags.
     tags:
       - 'v*'
+  pull_request:
+    branches: [ dsql-specific ]
   # Give us a button to allow running the workflow on demand for testing.
   workflow_dispatch:
     inputs:
