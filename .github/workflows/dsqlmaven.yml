@@ -6,9 +6,6 @@ on:
     # Generate new docker images on release tags.
     tags:
       - 'v*'
-  # Run these workflows on a schedule so that docker images are regularly updated for security patches.
-  schedule:
-    - cron: "1 0 * * *"
   # Give us a button to allow running the workflow on demand for testing.
   workflow_dispatch:
     inputs:
@@ -21,7 +18,6 @@ env:
   POM_VERSION: 2023-SNAPSHOT
   JAVA_VERSION: 21
   ERRORS_THRESHOLD: 0.01
-  PYTHON_VERSION: "3.10"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
