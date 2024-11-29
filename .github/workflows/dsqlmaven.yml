@@ -1,4 +1,4 @@
-name: DSQL BenchBase (Java with Maven)
+name: DSQL BenchBase Integ Test
 
 on:
   push:
@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  compile-and-test:
+  compile:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -43,7 +43,7 @@ jobs:
       - name: Compile with Maven
         run: mvn -B compile test-compile --file pom.xml
 
-      # Skip testing until integ is done
+      # Don't need testing, its done in maven.yml
       # - name: Test exec plugin
       #   run: |
       #     mvn exec:java -P sqlite -Dexec.args="-b noop -c config/sqlite/sample_noop_config.xml --create=true --load=true --execute=true"
@@ -52,7 +52,7 @@ jobs:
       #   run: mvn -B test --file pom.xml
 
   package-and-upload:
-    needs: compile-and-test
+    needs: compile
     runs-on: ubuntu-latest
     strategy:
       matrix:

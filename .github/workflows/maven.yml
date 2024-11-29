@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        profile: [ 'cockroachdb', 'mariadb', 'mysql', 'oracle', 'phoenix', 'postgres', 'spanner', 'sqlite', 'sqlserver' ]
+        profile: [ 'auroradsql', 'cockroachdb', 'mariadb', 'mysql', 'oracle', 'phoenix', 'postgres', 'spanner', 'sqlite', 'sqlserver' ]
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
@@ -735,7 +735,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
-      BENCHBASE_PROFILES: 'cockroachdb mariadb mysql oracle phoenix postgres spanner sqlite sqlserver'
+      BENCHBASE_PROFILES: 'auroradsql cockroachdb mariadb mysql oracle phoenix postgres spanner sqlite sqlserver'
       CONTAINER_REGISTRY_NAME: ${{ secrets.ACR_LOGINURL }}
     services:
       postgres: # https://hub.docker.com/_/postgres
