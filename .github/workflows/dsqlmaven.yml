@@ -2,12 +2,10 @@ name: DSQL BenchBase (Java with Maven)
 
 on:
   push:
-    branches: [ dsql-integ-test ]
+    branches: [ dsql-specific ]
     # Generate new docker images on release tags.
     tags:
       - 'v*'
-  pull_request:
-    branches: [ dsql-integ-test ]
   # Run these workflows on a schedule so that docker images are regularly updated for security patches.
   schedule:
     - cron: "1 0 * * *"
