@@ -378,29 +378,24 @@
 
         <!-- For Aurora Dsql Token Generation -->
         <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>http-auth-aws</artifactId>
-            <version>2.25.28</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>auth</artifactId>
-            <version>2.25.28</version>
+            <groupId>software.amazon.awssdk.services</groupId>
+            <artifactId>dsql</artifactId>
+            <version>2.29.23</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>regions</artifactId>
-            <version>2.25.28</version>
+            <version>2.25.60</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sdk-core</artifactId>
-            <version>2.25.28</version>
+            <version>2.25.60</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
-            <artifactId>http-client-spi</artifactId>
-            <version>2.25.28</version>
+            <artifactId>auth</artifactId>
+            <version>2.25.60</version>
         </dependency>
 
         <!-- For Rate Limiter -->
