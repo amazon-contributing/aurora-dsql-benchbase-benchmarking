@@ -1,6 +1,8 @@
 # BenchBase Fork For Aurora DSQL
 
-This temporary repository is for AWS customers to run TPC-C benchmarking against the newly launched [Amazon Aurora DSQ](https://aws.amazon.com/rds/aurora/dsql/). We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
+We have temporarily made this repository available for AWS customers to run TPC-C benchmarking against the newly launched [Amazon Aurora DSQ](https://aws.amazon.com/rds/aurora/dsql/). We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
+
+> Please note that based on the [default limits](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html) for Aurora DSQL clusters during preview, you can run a TPC-C workload with up to 200 warehouses. If you need to run a higher load for benchmarking, please [contact AWS Support](https://support.console.aws.amazon.com/support/home#/) to request a limit increase.
 
 **Table of Contents**
 
@@ -24,7 +26,7 @@ tar xvzf benchbase-auroradsql.tgz
 cd benchbase-auroradsql
 ```
 Inside this folder, run BenchBase by executing the tpcc benchmark,
-> To learn more about the config file and the benchmarking results, checkout this wiki [link](https://github.com/amazon-contributing/aurora-dsql-benchbase-benchmarking/wiki#loading-data-and-running-tpc-c-against-an-aurora-dsql-cluster).
+> To learn more about the config file changes for Aurora DSQL and the benchmarking results, checkout this [wiki](https://github.com/amazon-contributing/aurora-dsql-benchbase-benchmarking/wiki#loading-data-and-running-tpc-c-against-an-aurora-dsql-cluster).
 ```bash
 java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=true --load=true --execute=true
 ```
