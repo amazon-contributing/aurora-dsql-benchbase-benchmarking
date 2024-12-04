@@ -1,6 +1,6 @@
 # BenchBase Fork For Aurora DSQL
 
-We have temporarily made this repository available for AWS customers to run TPC-C benchmarking against the newly launched [Amazon Aurora DSQ](https://aws.amazon.com/rds/aurora/dsql/). We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
+We have temporarily made this repository available for AWS customers to run TPC-C benchmarking against the newly launched [Amazon Aurora DSQL](https://aws.amazon.com/rds/aurora/dsql/). We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
 
 > Please note that based on the [default limits](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html) for Aurora DSQL clusters during preview, you can run a TPC-C workload with up to 200 warehouses. If you need to run a higher load for benchmarking, please [contact AWS Support](https://support.console.aws.amazon.com/support/home#/) to request a limit increase.
 
@@ -19,7 +19,7 @@ git clone --depth 1 https://github.com/amazon-contributing/aurora-dsql-benchbase
 cd aurora-dsql-benchbase-benchmarking
 ./mvnw clean package -P auroradsql
 ```
-This produces artifacts in the target folder, which can be extracted,
+This produces artifacts in the `target` folder, which can be extracted,
 ```bash
 cd target
 tar xvzf benchbase-auroradsql.tgz
