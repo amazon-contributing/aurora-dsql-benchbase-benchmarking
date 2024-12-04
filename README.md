@@ -1,6 +1,6 @@
 # BenchBase Fork For Aurora DSQL
 
-This temporary repository is for AWS customers to run TPC-C benchmarking against the newly launched Amazon Aurora DSQL. We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
+This temporary repository is for AWS customers to run TPC-C benchmarking against the newly launched [Amazon Aurora DSQ](https://aws.amazon.com/rds/aurora/dsql/). We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
 
 **Table of Contents**
 
