@@ -1,6 +1,6 @@
 # BenchBase Fork For Aurora DSQL
 
-BenchBase (formerly [OLTPBench](https://github.com/oltpbenchmark/oltpbench/)) is a Multi-DBMS SQL Benchmarking Framework via JDBC. This fork of benchbase has a sample config file to run a TPC-C workload on an Aurora DSQL cluster.
+This temporary repository is for AWS customers to run TPC-C benchmarking against the newly launched Amazon Aurora DSQL. We will archive this repository once we upstream our modifications to the original [cmu-db/benchbase](https://github.com/cmu-db/benchbase) repository.
 
 **Table of Contents**
 
