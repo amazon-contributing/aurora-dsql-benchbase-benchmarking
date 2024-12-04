@@ -9,23 +9,19 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    assignees:
-      - "apavlo"
+    open-pull-requests-limit: 0
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
       interval: "daily"
-    assignees:
-      - "bpkroth"
+    open-pull-requests-limit: 0
   - package-ecosystem: "docker"
     directory: "/docker/benchbase/devcontainer/"
     schedule:
       interval: "daily"
-    assignees:
-      - "bpkroth"
+    open-pull-requests-limit: 0
   - package-ecosystem: "docker"
     directory: "/docker/benchbase/fullimage/"
     schedule:
       interval: "daily"
-    assignees:
-      - "bpkroth"
+    open-pull-requests-limit: 0
