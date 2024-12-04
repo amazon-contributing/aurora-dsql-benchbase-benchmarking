@@ -1,0 +1,63 @@
+.project
+
+docker/**/*.zip
+docker/**/output
+results
+
+### SQLite ###
+**/*.db
+**/*.db-journal
+
+HELP.md
+PRIVATE.md
+target/
+profiles/
+docker/benchbase/fullimage/tmp/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+java_*.hprof*
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+### VS Code ###
+.vscode/
+*.log
+
+# vim swap files
+.*.swp
+
+.env
+docker-compose-*.tar.gz
+
+# Python
+__pycache__/
+*.py[cod]
