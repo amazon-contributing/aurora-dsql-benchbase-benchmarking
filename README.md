@@ -23,7 +23,7 @@ The benchbase package we will be using requires [Java 21](https://docs.aws.amazo
 
 ### Have a DSQL Cluster ready
 
-If you haven’t done it already, go ahead and create a cluster to use for the TPC-C benchmarking following this guide [LINK to creating clusters]
+If you haven’t done it already, go ahead and create a cluster to use for the TPC-C benchmarking following this [guide](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/programming-with-cli-crud.html) or using the [AWS console](https://console.aws.amazon.com/dsql).
 
 
 ## Quickstart
@@ -54,7 +54,7 @@ We have added sample configuration and ddl files to the repository, allowing you
 
 This file contains various settings that can be adjusted based on how users want to run the benchmarking test. Before loading any data into the table, replace `localhost` in the `<url></url>` tag with your Aurora DSQL cluster endpoint.
 
-Next, set the username and the password token inside the `<username></username>` and `<password></password>` tags. If you don’t know how to generate a password token, follow this guide [LINK to token generation].
+Next, set the username and the password token inside the `<username></username>` and `<password></password>` tags. If you don’t know how to generate a password token, follow this [guide](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/SECTION_authentication-token.html).
 
 We have also added automatic password/token generation using IAM authentication in our custom Benchbase implementation. To use it, simply leave the `<password></password>` field empty. To understand where the credentials and region information are fetched from, checkout these libraries:
 - [DefaultCredentialsProvider](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/auth/credentials/DefaultCredentialsProvider.html)
@@ -136,7 +136,7 @@ cd ../..
 ./mvnw clean
 ```
 
-2. Delete your cluster by following this guide: [LINK on how to delete your DSQL cluster]
+2. Delete your cluster by following this [guide](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/programming-with-cli-crud.html#programming-with-cli-crud-delete) or using the [AWS console](https://console.aws.amazon.com/dsql).
 
 ---
 

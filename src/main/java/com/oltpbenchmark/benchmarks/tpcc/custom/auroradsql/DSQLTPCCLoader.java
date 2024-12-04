@@ -55,6 +55,7 @@ import java.util.function.Consumer;
  *    into tables fails (set maxRetries in config.xml). This helps
  *    avoid any OCC errors. (OC001)
  * - Don't fail on duplicate key exceptions. Move to next statement.
+ * - Run ANALYZE on tables after loading is completed
  */
 public final class DSQLTPCCLoader extends Loader<TPCCBenchmark> {
 
