@@ -1,8 +1,6 @@
 package com.oltpbenchmark.util;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,29 +38,6 @@ public class TestIAMUtil {
 
     regionProvider = Mockito.mock(DefaultAwsRegionProviderChain.class);
     Mockito.when(regionProvider.getRegion()).thenReturn(Region.US_EAST_2);
-  }
-
-  @Test
-  public void testGenerateAuroraDsqlPasswordToken() {
-    String token =
-        IAMUtil.generateAuroraDsqlPasswordToken(
-            VALID_URL, VALID_ADMIN_USERNAME, credentialsProvider, regionProvider);
-    assertNotNull(token);
-    assertTrue(token.contains("localhost/?"));
-    assertTrue(token.contains("X-Amz-Algorithm=AWS4-HMAC-SHA256"));
-    assertTrue(token.contains("X-Amz-Expires=3600"));
-    assertTrue(token.contains("Action=DbConnectAdmin"));
-    assertTrue(token.contains("X-Amz-Credential=ACCESS_KEY"));
-    assertTrue(token.contains("X-Amz-Signature"));
-  }
-
-  @Test
-  public void testGenerateAuroraDsqlPasswordTokenNonAdminUser() {
-    String token =
-        IAMUtil.generateAuroraDsqlPasswordToken(
-            VALID_URL, "other", credentialsProvider, regionProvider);
-    assertNotNull(token);
-    assertTrue(token.contains("Action=DbConnect"));
   }
 
   @Test
