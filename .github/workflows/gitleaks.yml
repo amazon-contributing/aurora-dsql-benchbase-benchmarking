@@ -2,11 +2,11 @@ name: Scan for leaked secrets
 
 on:
   push:
-    branches: [ to-be-upstreamed, dsql-specific ]
+    branches: [ to-be-upstreamed, dsql ]
     tags:
       - 'v*'
   pull_request:
-    branches: [ to-be-upstreamed, dsql-specific ]
+    branches: [ to-be-upstreamed, dsql ]
 
 jobs:
   test:

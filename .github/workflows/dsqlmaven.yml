@@ -2,12 +2,12 @@ name: DSQL BenchBase Integ Test
 
 on:
   push:
-    branches: [ dsql-specific ]
+    branches: [ dsql ]
     # Generate new docker images on release tags.
     tags:
       - 'v*'
   pull_request:
-    branches: [ dsql-specific ]
+    branches: [ dsql ]
   # Give us a button to allow running the workflow on demand for testing.
   workflow_dispatch:
     inputs:

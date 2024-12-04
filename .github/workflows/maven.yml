@@ -14,12 +14,12 @@ name: BenchBase (Java with Maven)
 
 on:
   push:
-    branches: [ to-be-upstreamed, dsql-specific ]
+    branches: [ to-be-upstreamed, dsql ]
     # Generate new docker images on release tags.
     tags:
       - 'v*'
   pull_request:
-    branches: [ to-be-upstreamed, dsql-specific ]
+    branches: [ to-be-upstreamed, dsql ]
   # Run these workflows on a schedule so that docker images are regularly updated for security patches.
   schedule:
     - cron: "1 0 * * *"
