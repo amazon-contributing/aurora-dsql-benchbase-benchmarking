@@ -378,7 +378,7 @@
 
         <!-- For Aurora Dsql Token Generation -->
         <dependency>
-            <groupId>software.amazon.awssdk.services</groupId>
+            <groupId>software.amazon.awssdk</groupId>
             <artifactId>dsql</artifactId>
             <version>2.29.27</version>
         </dependency>
