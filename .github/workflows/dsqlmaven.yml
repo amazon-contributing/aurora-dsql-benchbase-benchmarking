@@ -30,9 +30,7 @@ jobs:
       - name: Print refs
         run: |
           echo "GITHUB_REF: $GITHUB_REF"
-          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
-          echo "GITHUB_BASE_REF: $GITHUB_BASE_REF"
-          echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+          echo "GITHUB_SUB: $GITHUB_SUB"
   compile:
     runs-on: ubuntu-latest
     steps:
