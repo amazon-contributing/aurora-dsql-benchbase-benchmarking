@@ -22,14 +22,16 @@ env:
   ERRORS_THRESHOLD: 0.01
 
 jobs:
-  get-id-token:
+  get-refs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-      - run: |
-          ID_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://demo" | jq -r .value)
-          echo $ID_TOKEN | base64
+      - name: Print refs
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_BASE_REF: $GITHUB_BASE_REF"
   compile:
     runs-on: ubuntu-latest
     steps:
@@ -129,7 +131,8 @@ jobs:
       - name: Run benchmark
         run: |
           sed 's/localhost:5432/${{ secrets.CLUSTER_ENDPOINT }}:5432/g' config/auroradsql/sample_${{matrix.benchmark}}_config.xml > sample.xml
-          java -jar benchbase.jar -b ${{matrix.benchmark}} -c sample.xml -im 1000 -mt advanced --create=true --load=true --execute=true --json-histograms results/histograms.json
+          cat sample.xml
+          #java -jar benchbase.jar -b ${{matrix.benchmark}} -c sample.xml -im 1000 -mt advanced --create=true --load=true --execute=true --json-histograms results/histograms.json
 
           # FIXME: Reduce the error rate so we don't need these overrides.
           results_benchmark=${{matrix.benchmark}}
