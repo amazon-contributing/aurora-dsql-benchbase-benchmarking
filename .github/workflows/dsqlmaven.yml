@@ -2,7 +2,7 @@ name: DSQL BenchBase Integ Test
 
 on:
   push:
-    branches: [ dsql, git-actions-oicd ]
+    branches: [ dsql ]
     # Generate new docker images on release tags.
     tags:
       - 'v*'
@@ -22,17 +22,6 @@ env:
   ERRORS_THRESHOLD: 0.01
 
 jobs:
-  get-refs:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - name: Print refs
-        run: |
-          echo "GITHUB_REF: $GITHUB_REF"
-          echo "GITHUB_SUB: $GITHUB_SUB"
-          ID_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://demo" | jq -r .value)
-          echo $ID_TOKEN | base64
   compile:
     runs-on: ubuntu-latest
     steps:
@@ -136,7 +125,7 @@ jobs:
 
       - name: Run benchmark
         run: |
-          sed -i .bak 's/localhost:5432/${{ secrets.CLUSTER_ENDPOINT }}:5432/g' config/auroradsql/sample_${{matrix.benchmark}}_config.xml
+          sed -i 's/localhost:5432/${{ secrets.CLUSTER_ENDPOINT }}:5432/g' config/auroradsql/sample_${{matrix.benchmark}}_config.xml
           cat config/auroradsql/sample_${{matrix.benchmark}}_config.xml
           #java -jar benchbase.jar -b ${{matrix.benchmark}} -c config/auroradsql/sample_${{matrix.benchmark}}_config.xml -im 1000 -mt advanced --create=true --load=true --execute=true --json-histograms results/histograms.json
 
