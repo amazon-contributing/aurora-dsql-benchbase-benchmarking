@@ -121,7 +121,7 @@ jobs:
       - name: Configure Benchmark
         uses: Mudlet/xmlstarlet-action@master
         with:
-          args: ed --inplace -u "//parameters/scalefactor" --value "1" -u "//parameters/terminals" --value "1" config/auroradsql/sample_${{matrix.benchmark}}_config.xml
+          args: ed --inplace -u "//parameters/scalefactor" -v "1" -u "//parameters/terminals" -v "1" -u "//parameters/works/work/time" -v "60" -u "//parameters/works/work/warmup" -v "0" config/auroradsql/sample_${{matrix.benchmark}}_config.xml
 
       - name: Run benchmark
         run: |
