@@ -47,4 +47,27 @@ public abstract class TimeUtil {
   public static Timestamp getCurrentTime() {
     return new Timestamp(System.currentTimeMillis());
   }
+
+  /**
+   * Calculate exponential backoff delay with jitter!
+   *
+   * <p>NOTE: Added to time util class to avoid additional class just for one method.
+   *
+   * @param attempts
+   * @return Exponential Delay
+   */
+  public static long calExpDelay(int attempts) {
+    long baseDelay = 1000; // Initial delay in milliseconds
+    double jitterFactor = 1.0; // Jitter factor (between 0 and 1)
+
+    long delay = (long) (baseDelay * Math.pow(2, attempts));
+    delay = (long) (delay * (1 + jitterFactor * Math.random()));
+    delay = Math.min(delay, 4000);
+
+    return delay;
+  }
+
+  public static long getTimeDiffInMicro(long startNano, long endNano) {
+    return (endNano - startNano) / 1000;
+  }
 }
