@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
@@ -87,23 +88,27 @@ public abstract class BenchmarkModule {
 
   public final Connection makeConnection() throws SQLException {
 
+    Properties properties = new Properties();
+    // Keepalive is disabled by default. Enable it. https://github.com/pgjdbc/pgjdbc
+    properties.setProperty("tcpKeepAlive", "true");
+
     /** For DSQL, generate password token using IAM auth if one isn't provided. */
     if (StringUtils.isEmpty(workConf.getPassword())
         && workConf.getDatabaseType() == DatabaseType.AURORADSQL) {
       String username =
           StringUtils.isEmpty(workConf.getUsername()) ? "admin" : workConf.getUsername();
-      return DriverManager.getConnection(
-          workConf.getUrl(),
-          username,
-          IAMUtil.generateAuroraDsqlPasswordToken(workConf.getUrl(), username));
+
+      properties.setProperty("user", username);
+      properties.setProperty(
+          "password",
+          IAMUtil.generateAuroraDsqlPasswordToken(
+              workConf.getUrl(), username, workConf.getRegion()));
+    } else if (!StringUtils.isEmpty(workConf.getUsername())) {
+      properties.setProperty("user", workConf.getUsername());
+      properties.setProperty("password", workConf.getPassword());
     }
 
-    if (StringUtils.isEmpty(workConf.getUsername())) {
-      return DriverManager.getConnection(workConf.getUrl());
-    } else {
-      return DriverManager.getConnection(
-          workConf.getUrl(), workConf.getUsername(), workConf.getPassword());
-    }
+    return DriverManager.getConnection(workConf.getUrl(), properties);
   }
 
   private String afterLoadScriptPath = null;

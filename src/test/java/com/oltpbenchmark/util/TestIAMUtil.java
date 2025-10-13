@@ -46,7 +46,7 @@ public class TestIAMUtil {
         RuntimeException.class,
         () ->
             IAMUtil.generateAuroraDsqlPasswordToken(
-                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, regionProvider));
+                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, Region.US_EAST_2));
   }
 
   @Test
@@ -56,6 +56,6 @@ public class TestIAMUtil {
         RuntimeException.class,
         () ->
             IAMUtil.generateAuroraDsqlPasswordToken(
-                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, regionProvider));
+                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, Region.US_EAST_2));
   }
 }

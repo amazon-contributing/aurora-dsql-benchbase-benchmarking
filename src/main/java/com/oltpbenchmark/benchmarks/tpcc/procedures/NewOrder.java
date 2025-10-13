@@ -23,6 +23,7 @@ import com.oltpbenchmark.benchmarks.tpcc.TPCCConstants;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCUtil;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCWorker;
 import com.oltpbenchmark.benchmarks.tpcc.pojo.Stock;
+import com.oltpbenchmark.util.TimeUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,6 +36,53 @@ import org.slf4j.LoggerFactory;
 public class NewOrder extends TPCCProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(NewOrder.class);
+
+  private static final String TX_NAME = "NewOrder";
+
+  private static final String GET_CUSTOMER_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomer" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerZeroResult";
+  private static final String GET_WAREHOUSE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getWarehouse" + TPCCConstants.SEPARATOR;
+  private static final String GET_WAREHOUSE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getWarehouseZeroResult";
+  private static final String GET_DISTRICT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getDistrict" + TPCCConstants.SEPARATOR;
+  private static final String GET_DISTRICT_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getDistrictZeroResult";
+  private static final String UPDATE_DISTRICT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateDistrict" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_DISTRICT_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateDistrictZeroResult";
+  private static final String INSERT_OPEN_ORDER_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "insertOpenOrder" + TPCCConstants.SEPARATOR;
+  private static final String INSERT_OPEN_ORDER_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "insertOpenOrderZeroResult";
+  private static final String INSERT_NEW_ORDER_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "insertNewOrder" + TPCCConstants.SEPARATOR;
+  private static final String INSERT_NEW_ORDER_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "insertNewOrderZeroResult";
+  private static final String UPDATE_STOCK_INSERT_ORDERLINE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateStockInsertOrderline" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_STOCK_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateStock" + TPCCConstants.SEPARATOR;
+  private static final String INSERT_ORDERLINE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "insertOrderline" + TPCCConstants.SEPARATOR;
+  private static final String GET_ITEM_PRICE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getItemPrice" + TPCCConstants.SEPARATOR;
+  // Tracks the total time taken by all GetItem queries in the transaction
+  private static final String GET_ITEM_PRICE_TOTAL_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getItemPriceTotal" + TPCCConstants.SEPARATOR;
+  private static final String GET_ITEM_PRICE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getItemPriceZeroResult";
+  private static final String GET_STOCK_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getStock" + TPCCConstants.SEPARATOR;
+  // Tracks the total time taken by all GetStock queries in the transaction
+  private static final String GET_STOCK_TOTAL_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getStockTotal" + TPCCConstants.SEPARATOR;
+  private static final String GET_STOCK_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getStockZeroResult";
 
   public final SQLStmt stmtGetCustSQL =
       new SQLStmt(
@@ -212,17 +260,29 @@ public class NewOrder extends TPCCProcedure {
         PreparedStatement stmtInsertOrderLine =
             this.getPreparedStatement(conn, stmtInsertOrderLineSQL)) {
 
+      // Track total time across all gets in the loop.
+      long getItemTotalTime = 0;
+      long getStockTotalTime = 0;
+
       for (int ol_number = 1; ol_number <= o_ol_cnt; ol_number++) {
         int ol_supply_w_id = supplierWarehouseIDs[ol_number - 1];
         int ol_i_id = itemIDs[ol_number - 1];
         int ol_quantity = orderQuantities[ol_number - 1];
 
+        long start = System.nanoTime();
         // this may occasionally error and that's ok!
         float i_price = getItemPrice(conn, ol_i_id);
 
+        long end = System.nanoTime();
+        getItemTotalTime += TimeUtil.getTimeDiffInMicro(start, end);
+
         float ol_amount = ol_quantity * i_price;
 
+        start = System.nanoTime();
         Stock s = getStock(conn, ol_supply_w_id, ol_i_id, ol_quantity);
+
+        end = System.nanoTime();
+        getStockTotalTime += TimeUtil.getTimeDiffInMicro(start, end);
 
         String ol_dist_info = getDistInfo(d_id, s);
 
@@ -251,14 +311,16 @@ public class NewOrder extends TPCCProcedure {
         stmtUpdateStock.setInt(4, ol_i_id);
         stmtUpdateStock.setInt(5, ol_supply_w_id);
         stmtUpdateStock.addBatch();
-      }
+      } // for loop
 
       stmtInsertOrderLine.executeBatch();
+
       stmtInsertOrderLine.clearBatch();
 
       stmtUpdateStock.executeBatch();
+
       stmtUpdateStock.clearBatch();
-    }
+    } // try block
   }
 
   private String getDistInfo(int d_id, Stock s) {

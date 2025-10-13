@@ -17,6 +17,8 @@
 
 package com.oltpbenchmark.benchmarks.tpcc;
 
+import static java.util.stream.Collectors.joining;
+
 import com.oltpbenchmark.WorkloadConfiguration;
 import com.oltpbenchmark.api.BenchmarkModule;
 import com.oltpbenchmark.api.Loader;
@@ -66,15 +68,49 @@ public final class TPCCBenchmark extends BenchmarkModule {
   }
 
   protected List<TPCCWorker> createTerminals() throws SQLException {
+    final List<TPCCWorker> workers = createTerminalsOldWay();
 
+    final String assignedWarehouses =
+        workers.stream()
+            .map(worker -> String.valueOf(worker.getTerminalWarehouseID()))
+            .collect(joining(","));
+
+    LOG.info("Created workers for warehouses: {}", assignedWarehouses);
+
+    return workers;
+  }
+
+  private List<TPCCWorker> createTerminalsOldWay() throws SQLException {
     TPCCWorker[] terminals = new TPCCWorker[workConf.getTerminals()];
 
-    int numWarehouses = (int) workConf.getScaleFactor();
-    if (numWarehouses <= 0) {
-      numWarehouses = 1;
+    // totalWarehouses is equal to numWarehouses in case of non-partitioned use case
+    int totalWarehouses = (int) workConf.getScaleFactor();
+
+    if (totalWarehouses <= 0) {
+      // At least one warehouse, @see
+      // https://github.com/cmu-db/benchbase/blob/main/src/main/java/com/oltpbenchmark/benchmarks/tpcc/TPCCBenchmark.java
+      totalWarehouses = 1;
     }
 
+    // Default values used for warehouse indexes and stride
+    final int startWarehouseIndex = 1;
+    final int endWarehouseIndex = totalWarehouses;
+    final int stride = 1;
+
+    LOG.info(
+        "Start warehouse idx: {} end warehouse idx: {} stride: {}",
+        startWarehouseIndex,
+        endWarehouseIndex,
+        stride);
+
+    final List<Integer> w_ids = new ArrayList<>();
+    for (int w_id = startWarehouseIndex; w_id <= endWarehouseIndex; w_id += stride) {
+      w_ids.add(w_id);
+    }
+    final int numWarehouses = w_ids.size();
     int numTerminals = workConf.getTerminals();
+
+    assert numWarehouses >= 1 : "At least need 1 warehouse to do benchmark";
 
     // We distribute terminals evenly across the warehouses
     // Eg. if there are 10 terminals across 7 warehouses, they
@@ -88,11 +124,11 @@ public final class TPCCBenchmark extends BenchmarkModule {
       int lowerTerminalId = (int) (w * terminalsPerWarehouse);
       int upperTerminalId = (int) ((w + 1) * terminalsPerWarehouse);
       // protect against double rounding errors
-      int w_id = w + 1;
-      if (w_id == numWarehouses) {
+      if (w + 1 == numWarehouses) {
         upperTerminalId = numTerminals;
       }
       int numWarehouseTerminals = upperTerminalId - lowerTerminalId;
+      int w_id = w_ids.get(w);
 
       if (LOG.isDebugEnabled()) {
         LOG.debug(
@@ -110,9 +146,9 @@ public final class TPCCBenchmark extends BenchmarkModule {
           upperDistrictId = TPCCConfig.configDistPerWhse;
         }
         lowerDistrictId += 1;
-
         TPCCWorker terminal =
-            new TPCCWorker(this, workerId++, w_id, lowerDistrictId, upperDistrictId, numWarehouses);
+            new TPCCWorker(
+                this, workerId++, w_id, lowerDistrictId, upperDistrictId, totalWarehouses);
         terminals[lowerTerminalId + terminalId] = terminal;
       }
     }

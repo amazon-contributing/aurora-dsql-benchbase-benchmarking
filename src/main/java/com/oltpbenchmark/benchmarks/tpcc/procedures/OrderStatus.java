@@ -37,6 +37,24 @@ public class OrderStatus extends TPCCProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(OrderStatus.class);
 
+  private static final String TX_NAME = "OrderStatus";
+  private static final String GET_CUSTOMER_BY_NAME_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerByName" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_BY_NAME_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerByNameZeroResult";
+  private static final String GET_CUSTOMER_BY_ID_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerById" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_BY_ID_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerByIdZeroResult";
+  private static final String GET_ORDER_DETAILS_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderDetails" + TPCCConstants.SEPARATOR;
+  private static final String GET_ORDER_DETAILS_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderDetailsZeroResult";
+  private static final String GET_ORDERLINE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderLines" + TPCCConstants.SEPARATOR;
+  private static final String GET_ORDERLINE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderLinesZeroResult";
+
   public SQLStmt ordStatGetNewestOrdSQL =
       new SQLStmt(
           """
@@ -101,14 +119,16 @@ public class OrderStatus extends TPCCProcedure {
     int y = TPCCUtil.randomNumber(1, 100, gen);
 
     boolean c_by_name;
-    String c_last = null;
-    int c_id = -1;
+    final String c_last;
+    final int c_id;
 
     if (y <= 60) {
       c_by_name = true;
       c_last = TPCCUtil.getNonUniformRandomLastNameForRun(gen);
+      c_id = -1;
     } else {
       c_by_name = false;
+      c_last = null;
       c_id = TPCCUtil.getCustomerID(gen);
     }
 

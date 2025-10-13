@@ -3,11 +3,11 @@ package com.oltpbenchmark.benchmarks.templated;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import com.oltpbenchmark.DBWorkload;
 import com.oltpbenchmark.WorkloadConfiguration;
 import com.oltpbenchmark.api.AbstractTestWorker;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.benchmarks.tpcc.TPCCBenchmark;
+import com.oltpbenchmark.execution.ConfigurationLoader;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class TestTemplatedWorker extends AbstractTestWorker<TemplatedBenchmark> 
   public static void setWorkloadConfigXml(WorkloadConfiguration workConf) {
     // Load the configuration file so we can parse the query_template_file value.
     try {
-      XMLConfiguration xmlConf = DBWorkload.buildConfiguration(SAMPLE_TEMPLATED_CONFIG);
+      XMLConfiguration xmlConf = ConfigurationLoader.loadXMLConfiguration(SAMPLE_TEMPLATED_CONFIG);
       workConf.setXmlConfig(xmlConf);
     } catch (ConfigurationException ex) {
       LOG.error("Error loading configuration: " + SAMPLE_TEMPLATED_CONFIG, ex);

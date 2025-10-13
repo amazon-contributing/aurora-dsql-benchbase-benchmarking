@@ -33,6 +33,16 @@ public class StockLevel extends TPCCProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(StockLevel.class);
 
+  private static final String TX_NAME = "StockLevel";
+  private static final String GET_ORDER_ID_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderId" + TPCCConstants.SEPARATOR;
+  private static final String GET_ORDER_ID_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderIdZeroResult";
+  private static final String GET_STOCK_COUNT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getStockCount" + TPCCConstants.SEPARATOR;
+  private static final String GET_STOCK_COUNT_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getStockCountZeroResult";
+
   public SQLStmt stockGetDistOrderIdSQL =
       new SQLStmt(
           """

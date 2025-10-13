@@ -48,6 +48,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(Worker.class);
   private static final Logger ABORT_LOG =
       LoggerFactory.getLogger("com.oltpbenchmark.api.ABORT_LOG");
+  private static final String HYPHEN = "-";
 
   private WorkloadState workloadState;
   private LatencyRecord latencies;
@@ -59,6 +60,10 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
   private final int id;
   private final T benchmark;
   protected Connection conn = null;
+  private boolean txSuccess = false;
+  private long workStart;
+  private long workEndWithCommit;
+  private long workEndWithoutCommit;
   protected final WorkloadConfiguration configuration;
   protected final TransactionTypes transactionTypes;
   protected final Map<TransactionType, Procedure> procedures = new HashMap<>();
@@ -80,9 +85,14 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
     this.configuration = this.benchmark.getWorkloadConfiguration();
     this.workloadState = this.configuration.getWorkloadState();
     this.currStatement = null;
+    this.txSuccess = false;
+    this.workStart = 0L;
+    this.workEndWithCommit = 0L;
+    this.workEndWithoutCommit = 0L;
+
     this.transactionTypes = this.configuration.getTransTypes();
 
-    if (!this.configuration.getNewConnectionPerTxn()) {
+    if (!this.configuration.isNewConnectionPerTxn()) {
       try {
         this.conn = ConnectionUtil.makeConnectionWithRetry(this.benchmark);
         this.conn.setAutoCommit(false);
@@ -227,6 +237,14 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
         }
       }
 
+      // If we are in an ERROR state, there is no point in keeping this worker awake.
+      // The most common reason to see ERROR state is when other workers see an uncaughtException
+      // which invokes
+      // ThreadBench#uncaughtException. The exception handler moves the state to ERROR.
+      if (preState == State.ERROR) {
+        break;
+      }
+
       // PART 2: Wait for work
 
       // Sleep if there's nothing to do.
@@ -288,6 +306,8 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
           }
         }
 
+        this.txSuccess = false;
+
         long start = System.nanoTime();
 
         doWork(configuration.getDatabaseType(), transactionType);
@@ -318,8 +338,11 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
               break;
             }
             if (preState == MEASURE && postPhase.getId() == prePhase.getId()) {
-              latencies.addLatency(transactionType.getId(), start, end, this.id, prePhase.getId());
-              intervalRequests.incrementAndGet();
+              if (!configuration.localMetricsDisabled()) {
+                latencies.addLatency(
+                    transactionType.getId(), start, end, this.id, prePhase.getId());
+                intervalRequests.incrementAndGet();
+              }
             }
             if (prePhase.isLatencyRun()) {
               workloadState.startColdQuery();
@@ -355,10 +378,21 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
 
       workloadState.finishedWork();
     }
-
     LOG.debug("worker calling teardown");
 
     tearDown();
+  }
+
+  private String getMeasurementName(boolean isSuccess, String transactionName) {
+    String measurementName;
+
+    if (isSuccess) {
+      measurementName = transactionName + "-Success";
+    } else {
+      measurementName = transactionName + "-Fail";
+    }
+
+    return measurementName;
   }
 
   private TransactionType getTransactionType(
@@ -411,7 +445,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
 
         if (this.conn == null) {
           try {
-            if (!this.configuration.getNewConnectionPerTxn()) {
+            if (!this.configuration.isNewConnectionPerTxn()) {
               if (retryCount > 0) {
                 Duration delay = Duration.ofSeconds(Math.min(retryCount, 5));
                 LOG.info("Backing off {} seconds before reconnecting.", delay.toSeconds());
@@ -438,6 +472,8 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
 
         try {
 
+          this.workStart = System.nanoTime();
+
           if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("%s %s attempting...", this, transactionType));
           }
@@ -454,7 +490,13 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
             LOG.debug(String.format("%s %s committing...", this, transactionType));
           }
 
+          this.workEndWithoutCommit = System.nanoTime();
+
           conn.commit();
+
+          this.workEndWithCommit = System.nanoTime();
+
+          this.txSuccess = true;
 
           break;
 
@@ -528,7 +570,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
           }
           // connection is closed, try a reconnect
           else {
-            if (this.configuration.getReconnectOnConnectionFailure()) {
+            if (this.configuration.isReconnectOnConnectionFailure()) {
               LOG.debug(
                   String.format(
                       "Won't attempt a rollback since a problem with the SQL connection was detected during [%s]... current retry attempt [%d], max retry attempts [%d], sql state [%s], error code [%d].",
@@ -562,7 +604,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
 
           // check the connection (after possible reconnection) again
           if ((isConnectionErrorException || !SQLUtil.isConnectionOK(conn))
-              && this.configuration.getReconnectOnConnectionFailure()) {
+              && this.configuration.isReconnectOnConnectionFailure()) {
             LOG.debug(
                 String.format(
                     "Retryable SQL connection exception occurred during [%s]... current retry attempt [%d], max retry attempts [%d], sql state [%s], error code [%d].",
@@ -613,7 +655,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
             break;
           }
         } finally {
-          if (this.configuration.getNewConnectionPerTxn() && this.conn != null) {
+          if (this.configuration.isNewConnectionPerTxn() && this.conn != null) {
             try {
               this.conn.close();
               this.conn = null;
@@ -624,13 +666,15 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
             LOG.warn("Connection error detected.");
           }
 
-          switch (status) {
-            case UNKNOWN -> this.txnUnknown.put(transactionType);
-            case SUCCESS -> this.txnSuccess.put(transactionType);
-            case USER_ABORTED -> this.txnAbort.put(transactionType);
-            case RETRY -> this.txnRetry.put(transactionType);
-            case RETRY_DIFFERENT -> this.txtRetryDifferent.put(transactionType);
-            case ERROR -> this.txnErrors.put(transactionType);
+          if (!configuration.localMetricsDisabled()) {
+            switch (status) {
+              case UNKNOWN -> this.txnUnknown.put(transactionType);
+              case SUCCESS -> this.txnSuccess.put(transactionType);
+              case USER_ABORTED -> this.txnAbort.put(transactionType);
+              case RETRY -> this.txnRetry.put(transactionType);
+              case RETRY_DIFFERENT -> this.txtRetryDifferent.put(transactionType);
+              case ERROR -> this.txnErrors.put(transactionType);
+            }
           }
         }
       }
@@ -748,7 +792,7 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
 
   /** Called at the end of the test to do any clean up that may be required. */
   public void tearDown() {
-    if (!this.configuration.getNewConnectionPerTxn() && this.conn != null) {
+    if (!this.configuration.isNewConnectionPerTxn() && this.conn != null) {
       try {
         conn.close();
       } catch (SQLException e) {

@@ -81,6 +81,8 @@ jobs:
   ## ----------------------------------------------------------------------------------
   auroradsql:
     needs: package-and-upload
+    # Only run on the main repository, not on forks (which don't have AWS credentials)
+    if: github.repository == 'amazon-contributing/aurora-dsql-benchbase-benchmarking'
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
