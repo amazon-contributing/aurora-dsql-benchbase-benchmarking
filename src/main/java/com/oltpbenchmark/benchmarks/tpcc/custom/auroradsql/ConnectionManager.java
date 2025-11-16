@@ -38,12 +38,12 @@ public class ConnectionManager {
 
   private final BenchmarkModule benchmark;
   private final ConcurrentMap<String, Pair<Connection, Long>> connections;
-  private final ConcurrentMap<String, PreparedStatement> statements;
+  private final ConcurrentMap<String, ConcurrentMap<String, PreparedStatement>> statementsByThread;
 
   public ConnectionManager(BenchmarkModule benchmark) {
     this.benchmark = benchmark;
     this.connections = new ConcurrentHashMap<>();
-    this.statements = new ConcurrentHashMap<>();
+    this.statementsByThread = new ConcurrentHashMap<>();
   }
 
   /**
@@ -69,6 +69,22 @@ public class ConnectionManager {
 
   /** Refreshes the connection for a thread, closing the old one if it exists. */
   public void refreshConnection(String threadName) throws SQLException {
+    // Clear all statements for this thread FIRST
+    ConcurrentMap<String, PreparedStatement> threadStatements =
+        statementsByThread.remove(threadName);
+
+    if (threadStatements != null) {
+      threadStatements.forEach(
+          (tableName, stmt) -> {
+            try {
+              stmt.close();
+            } catch (SQLException e) {
+              log.error("Failed to close statement for {}/{}", threadName, tableName, e);
+            }
+          });
+    }
+
+    // Then refresh connection
     closeConnectionForThread(threadName);
     createConnection(threadName);
   }
@@ -76,13 +92,15 @@ public class ConnectionManager {
   /** Gets or creates a prepared statement for the given thread and table. */
   public PreparedStatement getPreparedStatement(String threadName, String tableName, String sql)
       throws SQLException {
-    String key = generateStatementKey(threadName, tableName);
-    PreparedStatement stmt = statements.get(key);
+    ConcurrentMap<String, PreparedStatement> threadStatements =
+        statementsByThread.computeIfAbsent(threadName, k -> new ConcurrentHashMap<>());
+
+    PreparedStatement stmt = threadStatements.get(tableName);
 
     if (stmt == null || stmt.isClosed()) {
       Connection conn = getConnection(threadName);
       stmt = conn.prepareStatement(sql);
-      statements.put(key, stmt);
+      threadStatements.put(tableName, stmt);
     }
 
     return stmt;
@@ -90,14 +108,16 @@ public class ConnectionManager {
 
   /** Closes a specific prepared statement. */
   public void closePreparedStatement(String threadName, String tableName) {
-    String key = generateStatementKey(threadName, tableName);
-    PreparedStatement stmt = statements.remove(key);
+    ConcurrentMap<String, PreparedStatement> threadStatements = statementsByThread.get(threadName);
 
-    if (stmt != null) {
-      try {
-        stmt.close();
-      } catch (SQLException e) {
-        log.error("Failed to close PreparedStatement for {}", key, e);
+    if (threadStatements != null) {
+      PreparedStatement stmt = threadStatements.remove(tableName);
+      if (stmt != null) {
+        try {
+          stmt.close();
+        } catch (SQLException e) {
+          log.error("Failed to close PreparedStatement for {}/{}", threadName, tableName, e);
+        }
       }
     }
   }
@@ -105,20 +125,19 @@ public class ConnectionManager {
   /** Closes all resources for a specific thread. */
   public void closeResourcesForThread(String threadName) {
     // Close all statements for this thread
-    statements
-        .entrySet()
-        .removeIf(
-            entry -> {
-              if (entry.getKey().startsWith(threadName)) {
-                try {
-                  entry.getValue().close();
-                } catch (SQLException e) {
-                  log.error("Failed to close statement: {}", entry.getKey(), e);
-                }
-                return true;
-              }
-              return false;
-            });
+    ConcurrentMap<String, PreparedStatement> threadStatements =
+        statementsByThread.remove(threadName);
+
+    if (threadStatements != null) {
+      threadStatements.forEach(
+          (tableName, stmt) -> {
+            try {
+              stmt.close();
+            } catch (SQLException e) {
+              log.error("Failed to close statement for {}/{}", threadName, tableName, e);
+            }
+          });
+    }
 
     // Close connection
     closeConnectionForThread(threadName);
@@ -127,15 +146,18 @@ public class ConnectionManager {
   /** Closes all connections and statements. */
   public void closeAll() {
     // Close all statements
-    statements.forEach(
-        (key, stmt) -> {
-          try {
-            stmt.close();
-          } catch (SQLException e) {
-            log.error("Failed to close statement: {}", key, e);
-          }
+    statementsByThread.forEach(
+        (threadName, threadStatements) -> {
+          threadStatements.forEach(
+              (tableName, stmt) -> {
+                try {
+                  stmt.close();
+                } catch (SQLException e) {
+                  log.error("Failed to close statement for {}/{}", threadName, tableName, e);
+                }
+              });
         });
-    statements.clear();
+    statementsByThread.clear();
 
     // Close all connections
     connections.forEach(
@@ -166,9 +188,5 @@ public class ConnectionManager {
 
   private boolean isConnectionExpired(Pair<Connection, Long> connectionPair) {
     return System.currentTimeMillis() - connectionPair.second >= SESSION_DURATION;
-  }
-
-  private String generateStatementKey(String threadName, String tableName) {
-    return threadName + "_" + tableName;
   }
 }

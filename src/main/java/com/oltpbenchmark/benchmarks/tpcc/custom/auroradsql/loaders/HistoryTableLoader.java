@@ -72,14 +72,18 @@ public class HistoryTableLoader extends AbstractTableLoader {
     for (int d = 1; d <= districtsPerWarehouse; d++) {
       for (int c = 1; c <= customersPerDistrict; c++) {
         History history = generateHistory(warehouseId, d, c);
+        batchProcessor.add(history);
 
-        executeWithRetry(
-            () -> {
-              PreparedStatement stmt = getInsertStatement(threadName);
-              batchProcessor.add(history, stmt);
-            },
-            threadName,
-            "Insert History");
+        // Flush when batch is full
+        if (batchProcessor.shouldFlush()) {
+          executeWithRetry(
+              () -> {
+                PreparedStatement stmt = getInsertStatement(threadName);
+                batchProcessor.flush(stmt);
+              },
+              threadName,
+              "Flush history batch");
+        }
       }
     }
 

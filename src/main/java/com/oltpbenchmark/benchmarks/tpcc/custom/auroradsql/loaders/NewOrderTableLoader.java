@@ -85,13 +85,18 @@ public class NewOrderTableLoader extends AbstractTableLoader {
           newOrder.no_d_id = d;
           newOrder.no_o_id = c;
 
-          executeWithRetry(
-              () -> {
-                PreparedStatement stmt = getInsertStatement(threadName);
-                batchProcessor.add(newOrder, stmt);
-              },
-              threadName,
-              "Insert New Order");
+          batchProcessor.add(newOrder);
+
+          // Flush when batch is full
+          if (batchProcessor.shouldFlush()) {
+            executeWithRetry(
+                () -> {
+                  PreparedStatement stmt = getInsertStatement(threadName);
+                  batchProcessor.flush(stmt);
+                },
+                threadName,
+                "Flush new orders batch");
+          }
         }
       }
     }
