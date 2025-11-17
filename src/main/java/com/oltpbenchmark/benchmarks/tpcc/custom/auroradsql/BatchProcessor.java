@@ -51,56 +51,52 @@ public class BatchProcessor<T> {
   }
 
   /**
-   * Adds an item to the batch. Automatically flushes if batch size is reached.
+   * Adds an item to the batch. Does NOT auto-flush. Caller is responsible for calling flush() when
+   * ready.
    *
    * @param item The item to add
-   * @param statement The prepared statement to use for execution
-   * @throws SQLException if database operation fails
    */
-  public void add(T item, PreparedStatement statement) throws SQLException {
+  public void add(T item) {
     batch.add(item);
-
-    if (batch.size() >= batchSize) {
-      flush(statement);
-    }
   }
 
   /**
-   * Flushes any remaining items in the batch.
+   * Flushes items in the batch, processing in chunks of batchSize. This handles cases where the
+   * batch may have accumulated more items than batchSize. Only removes items from the batch after
+   * successful execution.
    *
    * @param statement The prepared statement to use for execution
    * @throws SQLException if database operation fails
    */
   public void flush(PreparedStatement statement) throws SQLException {
-    if (batch.isEmpty()) {
-      return;
-    }
-    try {
-      executeBatch(statement);
-    } catch (SQLException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new SQLException("Failed to execute batch", e);
-    }
-  }
+    while (!batch.isEmpty()) {
+      int itemsToFlush = Math.min(batch.size(), batchSize);
+      List<T> currentBatch = batch.subList(0, itemsToFlush);
 
-  /** Executes the current batch. */
-  private void executeBatch(PreparedStatement statement) throws SQLException {
-    for (T item : batch) {
-      statementSetter.accept(statement, item);
-      statement.addBatch();
+      // Execute this chunk
+      for (T item : currentBatch) {
+        statementSetter.accept(statement, item);
+        statement.addBatch();
+      }
+
+      statement.executeBatch();
+      statement.clearBatch();
+
+      log.debug("Executed batch of {} items", itemsToFlush);
+
+      // Only remove if successful
+      currentBatch.clear(); // Removes from original batch
     }
-
-    statement.executeBatch();
-    statement.clearBatch();
-
-    log.debug("Executed batch of {} items", batch.size());
-    batch.clear();
   }
 
   /** Returns the current number of items in the batch. */
   public int size() {
     return batch.size();
+  }
+
+  /** Returns true if the batch has reached the configured batch size and should be flushed. */
+  public boolean shouldFlush() {
+    return batch.size() >= batchSize;
   }
 
   /** Clears the batch without executing. */

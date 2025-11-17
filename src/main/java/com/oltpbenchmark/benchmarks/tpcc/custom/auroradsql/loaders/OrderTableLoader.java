@@ -78,14 +78,18 @@ public class OrderTableLoader extends AbstractTableLoader {
 
       for (int c = 1; c <= customersPerDistrict; c++) {
         Oorder order = generateOrder(warehouseId, d, c, c_ids[c - 1]);
+        batchProcessor.add(order);
 
-        executeWithRetry(
-            () -> {
-              PreparedStatement stmt = getInsertStatement(threadName);
-              batchProcessor.add(order, stmt);
-            },
-            threadName,
-            "Insert Order");
+        // Flush when batch is full
+        if (batchProcessor.shouldFlush()) {
+          executeWithRetry(
+              () -> {
+                PreparedStatement stmt = getInsertStatement(threadName);
+                batchProcessor.flush(stmt);
+              },
+              threadName,
+              "Flush orders batch");
+        }
       }
     }
 

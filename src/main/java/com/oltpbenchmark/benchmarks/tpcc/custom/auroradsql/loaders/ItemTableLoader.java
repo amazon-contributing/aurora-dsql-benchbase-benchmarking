@@ -61,14 +61,18 @@ public class ItemTableLoader extends AbstractTableLoader {
 
     for (int i = 1; i <= itemCount; i++) {
       Item item = generateItem(i);
+      batchProcessor.add(item);
 
-      executeWithRetry(
-          () -> {
-            PreparedStatement stmt = getInsertStatement(threadName);
-            batchProcessor.add(item, stmt);
-          },
-          threadName,
-          "Insert Item");
+      // Flush when batch is full
+      if (batchProcessor.shouldFlush()) {
+        executeWithRetry(
+            () -> {
+              PreparedStatement stmt = getInsertStatement(threadName);
+              batchProcessor.flush(stmt);
+            },
+            threadName,
+            "Flush items batch");
+      }
     }
 
     // Flush any remaining items

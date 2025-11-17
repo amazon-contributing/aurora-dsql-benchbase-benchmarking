@@ -67,14 +67,18 @@ public class StockTableLoader extends AbstractTableLoader {
 
     for (int i = 1; i <= numItems; i++) {
       Stock stock = generateStock(warehouseId, i);
+      batchProcessor.add(stock);
 
-      executeWithRetry(
-          () -> {
-            PreparedStatement stmt = getInsertStatement(threadName);
-            batchProcessor.add(stock, stmt);
-          },
-          threadName,
-          "Insert Stock");
+      // Flush when batch is full
+      if (batchProcessor.shouldFlush()) {
+        executeWithRetry(
+            () -> {
+              PreparedStatement stmt = getInsertStatement(threadName);
+              batchProcessor.flush(stmt);
+            },
+            threadName,
+            "Flush stocks batch");
+      }
     }
 
     // Flush any remaining stocks

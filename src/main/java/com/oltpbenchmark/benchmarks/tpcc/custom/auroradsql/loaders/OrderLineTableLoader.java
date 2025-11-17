@@ -83,14 +83,18 @@ public class OrderLineTableLoader extends AbstractTableLoader {
 
         for (int l = 1; l <= orderLineCount; l++) {
           OrderLine orderLine = generateOrderLine(warehouseId, d, c, l);
+          batchProcessor.add(orderLine);
 
-          executeWithRetry(
-              () -> {
-                PreparedStatement stmt = getInsertStatement(threadName);
-                batchProcessor.add(orderLine, stmt);
-              },
-              threadName,
-              "Insert Order Line");
+          // Flush when batch is full
+          if (batchProcessor.shouldFlush()) {
+            executeWithRetry(
+                () -> {
+                  PreparedStatement stmt = getInsertStatement(threadName);
+                  batchProcessor.flush(stmt);
+                },
+                threadName,
+                "Flush order lines batch");
+          }
         }
       }
     }

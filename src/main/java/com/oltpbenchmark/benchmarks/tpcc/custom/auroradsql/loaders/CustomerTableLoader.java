@@ -70,14 +70,18 @@ public class CustomerTableLoader extends AbstractTableLoader {
     for (int d = 1; d <= districtsPerWarehouse; d++) {
       for (int c = 1; c <= customersPerDistrict; c++) {
         Customer customer = generateCustomer(warehouseId, d, c);
+        batchProcessor.add(customer);
 
-        executeWithRetry(
-            () -> {
-              PreparedStatement stmt = getInsertStatement(threadName);
-              batchProcessor.add(customer, stmt);
-            },
-            threadName,
-            "Insert Customer");
+        // Flush when batch is full
+        if (batchProcessor.shouldFlush()) {
+          executeWithRetry(
+              () -> {
+                PreparedStatement stmt = getInsertStatement(threadName);
+                batchProcessor.flush(stmt);
+              },
+              threadName,
+              "Flush customers batch");
+        }
       }
     }
 
