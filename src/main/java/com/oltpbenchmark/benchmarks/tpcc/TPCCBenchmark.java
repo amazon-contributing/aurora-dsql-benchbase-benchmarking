@@ -85,6 +85,9 @@ public final class TPCCBenchmark extends BenchmarkModule {
 
     // totalWarehouses is equal to numWarehouses in case of non-partitioned use case
     int totalWarehouses = (int) workConf.getScaleFactor();
+    if (totalWarehouses <= 0) {
+      totalWarehouses = 1;
+    }
 
     // [startWarehouseIndex, endWarehouseIndex] are both included.
     // Use defaults if not configured: start=1, end=totalWarehouses, stride=1
@@ -109,8 +112,8 @@ public final class TPCCBenchmark extends BenchmarkModule {
 
     assert startWarehouseIndex >= 1 : "The start index must be >= 1";
     assert endWarehouseIndex >= 1 : "The end index must be >= 1";
-    assert endWarehouseIndex <= workConf.getScaleFactor()
-        : "The end index must be within the scale factor";
+    assert endWarehouseIndex <= totalWarehouses
+        : "The end index must be within the total warehouse number";
     assert numWarehouses >= 1 : "At least need 1 warehouse to do benchmark";
 
     // We distribute terminals evenly across the warehouses
