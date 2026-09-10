@@ -4,7 +4,7 @@
     <!-- Connection details -->
     <type>AURORADSQL</type>
     <driver>org.postgresql.Driver</driver>
-    <url>jdbc:postgresql://localhost:5432/postgres?sslmode=require&amp;ApplicationName=tpcc&amp;reWriteBatchedInserts=true</url>
+    <url>jdbc:postgresql://localhost:5432/postgres?sslmode=verify-full&amp;ApplicationName=tpcc&amp;reWriteBatchedInserts=true</url>
 
     <!-- Extra Feature -->
     <!-- If username isn't provided, "admin" is used by default. -->
