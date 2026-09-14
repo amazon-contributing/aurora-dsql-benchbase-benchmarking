@@ -4,7 +4,7 @@ import java.time.Duration;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.exception.SdkClientException;
-import software.amazon.awssdk.regions.providers.AwsRegionProviderChain;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.dsql.DsqlUtilities;
 
@@ -15,40 +15,38 @@ public class IAMUtil {
   private static final String ADMIN_USERNAME = "admin";
 
   public static String generateAuroraDsqlPasswordToken(String url, String username) {
+    return generateAuroraDsqlPasswordToken(url, username, null);
+  }
+
+  public static String generateAuroraDsqlPasswordToken(String url, String username, String region) {
+    if (region == null) {
+      Region defaultRegion = DefaultAwsRegionProviderChain.builder().build().getRegion();
+      return generateAuroraDsqlPasswordToken(
+          url,
+          username,
+          DefaultCredentialsProvider.builder().reuseLastProviderEnabled(false).build(),
+          defaultRegion);
+    }
     return generateAuroraDsqlPasswordToken(
         url,
         username,
         DefaultCredentialsProvider.builder().reuseLastProviderEnabled(false).build(),
-        DefaultAwsRegionProviderChain.builder().build());
+        Region.of(region));
   }
 
   public static String generateAuroraDsqlPasswordToken(
-      String url,
-      String username,
-      AwsCredentialsProvider credentialsProvider,
-      AwsRegionProviderChain regionProvider) {
+      String url, String username, AwsCredentialsProvider credentialsProvider, Region region) {
     DsqlUtilities utilities =
-        DsqlUtilities.builder()
-            .region(regionProvider.getRegion())
-            .credentialsProvider(credentialsProvider)
-            .build();
+        DsqlUtilities.builder().region(region).credentialsProvider(credentialsProvider).build();
 
     try {
       IAMUtil.validateUrl(url);
       String host = url.split("//")[1].split(":")[0];
       return username.equals(ADMIN_USERNAME)
           ? utilities.generateDbConnectAdminAuthToken(
-              builder ->
-                  builder
-                      .hostname(host)
-                      .region(regionProvider.getRegion())
-                      .expiresIn(DEFAULT_VALIDITY))
+              builder -> builder.hostname(host).region(region).expiresIn(DEFAULT_VALIDITY))
           : utilities.generateDbConnectAuthToken(
-              builder ->
-                  builder
-                      .hostname(host)
-                      .region(regionProvider.getRegion())
-                      .expiresIn(DEFAULT_VALIDITY));
+              builder -> builder.hostname(host).region(region).expiresIn(DEFAULT_VALIDITY));
     } catch (SdkClientException e) {
       throw new RuntimeException(e);
     }

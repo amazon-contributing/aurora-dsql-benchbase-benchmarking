@@ -27,4 +27,19 @@ public abstract class TPCCConstants {
   public static final String TABLENAME_OPENORDER = "oorder";
   public static final String TABLENAME_ORDERLINE = "order_line";
   public static final String TABLENAME_NEWORDER = "new_order";
+
+  public static final String[] ALL_TPCC_TABLES = {
+    TABLENAME_DISTRICT,
+    TABLENAME_WAREHOUSE,
+    TABLENAME_ITEM,
+    TABLENAME_STOCK,
+    TABLENAME_CUSTOMER,
+    TABLENAME_HISTORY,
+    TABLENAME_OPENORDER,
+    TABLENAME_ORDERLINE,
+    TABLENAME_NEWORDER
+  };
+
+  public static final String SEPARATOR = "-";
+  public static final String SUCCESS = "Success";
 }

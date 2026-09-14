@@ -48,7 +48,9 @@ CREATE TABLE stock (
     s_dist_08    char(24)      NOT NULL,
     s_dist_09    char(24)      NOT NULL,
     s_dist_10    char(24)      NOT NULL,
-    PRIMARY KEY (s_w_id, s_i_id)
+    PRIMARY KEY (s_w_id, s_i_id),
+    CONSTRAINT s_fkey_w FOREIGN KEY (s_w_id) REFERENCES warehouse (w_id) ON DELETE CASCADE,
+    CONSTRAINT s_fkey_i FOREIGN KEY (s_i_id) REFERENCES item (i_id) ON DELETE CASCADE
 );
 
 CREATE TABLE district (
@@ -63,7 +65,8 @@ CREATE TABLE district (
     d_city      varchar(20)    NOT NULL,
     d_state     char(2)        NOT NULL,
     d_zip       char(9)        NOT NULL,
-    PRIMARY KEY (d_w_id, d_id)
+    PRIMARY KEY (d_w_id, d_id),
+    CONSTRAINT d_fkey_w FOREIGN KEY (d_w_id) REFERENCES warehouse (w_id) ON DELETE CASCADE
 );
 
 CREATE TABLE customer (
@@ -88,7 +91,9 @@ CREATE TABLE customer (
     c_since        timestamp      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     c_middle       char(2)        NOT NULL,
     c_data         varchar(500)   NOT NULL,
-    PRIMARY KEY (c_w_id, c_d_id, c_id)
+    PRIMARY KEY (c_w_id, c_d_id, c_id),
+    CONSTRAINT c_fkey_d
+        FOREIGN KEY (c_w_id, c_d_id) REFERENCES district (d_w_id, d_id) ON DELETE CASCADE
 );
 
 CREATE TABLE history (
@@ -99,7 +104,11 @@ CREATE TABLE history (
     h_w_id   int           NOT NULL,
     h_date   timestamp     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     h_amount decimal(6, 2) NOT NULL,
-    h_data   varchar(24)   NOT NULL
+    h_data   varchar(24)   NOT NULL,
+    CONSTRAINT h_fkey_c
+        FOREIGN KEY (h_c_w_id, h_c_d_id, h_c_id) REFERENCES customer (c_w_id, c_d_id, c_id) ON DELETE CASCADE,
+    CONSTRAINT h_fkey_d
+        FOREIGN KEY (h_w_id, h_d_id) REFERENCES district (d_w_id, d_id) ON DELETE CASCADE
 );
 
 CREATE TABLE oorder (
@@ -112,14 +121,18 @@ CREATE TABLE oorder (
     o_all_local  int       NOT NULL,
     o_entry_d    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (o_w_id, o_d_id, o_c_id, o_id),
-    PRIMARY KEY (o_w_id, o_d_id, o_id)
+    PRIMARY KEY (o_w_id, o_d_id, o_id),
+    CONSTRAINT o_fkey_c
+        FOREIGN KEY (o_w_id, o_d_id, o_c_id) REFERENCES customer (c_w_id, c_d_id, c_id) ON DELETE CASCADE
 );
 
 CREATE TABLE new_order (
     no_w_id int NOT NULL,
     no_d_id int NOT NULL,
     no_o_id int NOT NULL,
-    PRIMARY KEY (no_w_id, no_d_id, no_o_id)
+    PRIMARY KEY (no_w_id, no_d_id, no_o_id),
+    CONSTRAINT no_fkey_o
+        FOREIGN KEY (no_w_id, no_d_id, no_o_id) REFERENCES oorder (o_w_id, o_d_id, o_id) ON DELETE CASCADE
 );
 
 CREATE TABLE order_line (
@@ -133,7 +146,11 @@ CREATE TABLE order_line (
     ol_supply_w_id int           NOT NULL,
     ol_quantity    decimal(6, 2) NOT NULL,
     ol_dist_info   char(24)      NOT NULL,
-    PRIMARY KEY (ol_w_id, ol_d_id, ol_o_id, ol_number)
+    PRIMARY KEY (ol_w_id, ol_d_id, ol_o_id, ol_number),
+    CONSTRAINT ol_fkey_o
+        FOREIGN KEY (ol_w_id, ol_d_id, ol_o_id) REFERENCES oorder (o_w_id, o_d_id, o_id) ON DELETE CASCADE,
+    CONSTRAINT ol_fkey_s
+        FOREIGN KEY (ol_supply_w_id, ol_i_id) REFERENCES stock (s_w_id, s_i_id) ON DELETE CASCADE
 );
 
 CREATE INDEX ASYNC idx_customer_name ON customer (c_w_id, c_d_id, c_last, c_first);

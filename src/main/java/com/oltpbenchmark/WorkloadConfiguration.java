@@ -21,13 +21,25 @@ import com.oltpbenchmark.util.ThreadUtil;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.configuration2.XMLConfiguration;
 
+@Getter
+@Setter
+@ToString
 public class WorkloadConfiguration {
 
-  private final List<Phase> phases = new ArrayList<>();
+  public static final int UNINITIALIZED_TIME = -1;
+
+  @Getter private final List<Phase> phases = new ArrayList<>();
+
   private DatabaseType databaseType;
+
+  /** Benchmark name. For e.g. tpcc. */
   private String benchmarkName;
+
   private String url;
   private String username;
   private String password;
@@ -45,7 +57,14 @@ public class WorkloadConfiguration {
   private int isolationMode = Connection.TRANSACTION_SERIALIZABLE;
   private String dataDir = null;
   private String ddlPath = null;
+
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
   private boolean advancedMonitoringEnabled = false;
+
+  private boolean disableLocalMetrics = false;
+  private double connectionRate = 10.0;
+  private int startupRetries = 3;
 
   /**
    * If true, establish a new connection for each transaction, otherwise use one persistent
@@ -60,74 +79,45 @@ public class WorkloadConfiguration {
    */
   private boolean reconnectOnConnectionFailure = false;
 
-  public String getBenchmarkName() {
-    return benchmarkName;
-  }
+  /** AWS region */
+  private String region = null;
 
-  public void setBenchmarkName(String benchmarkName) {
-    this.benchmarkName = benchmarkName;
-  }
+  /** Should publish metrics to cloudwatch? */
+  private boolean publishToCloudWatch = false;
 
-  public WorkloadState getWorkloadState() {
-    return workloadState;
-  }
+  /** Cloudwatch namespace to publish metrics under. */
+  private String namespace = null;
 
-  public DatabaseType getDatabaseType() {
-    return databaseType;
-  }
+  /**
+   * Test name for the benchmark run. This is used as a dimension in the published cloudwatch
+   * metrics.
+   */
+  private String benchmarkTestName = null;
 
-  public void setDatabaseType(DatabaseType databaseType) {
-    this.databaseType = databaseType;
-  }
+  /**
+   * Stride configuration
+   *
+   * @return
+   */
+  private int stride = -1;
 
-  public String getUrl() {
-    return url;
-  }
+  private int startWarehouseIndex = -1;
+  private int endWarehouseIndex = -1;
 
-  public void setUrl(String url) {
-    this.url = url;
-  }
+  /**
+   * Flags to skip specific tasks in loader
+   *
+   * @return
+   */
+  private boolean skipItemLoad = false;
 
-  public String getUsername() {
-    return username;
-  }
+  private boolean skipIndexBuild = true;
+  private boolean skipMainDataLoad = false;
 
-  public void setUsername(String username) {
-    this.username = username;
-  }
+  /** Run time for the execution phase. */
+  private int runTimeInSeconds = UNINITIALIZED_TIME;
 
-  public String getPassword() {
-    return password;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
-  }
-
-  public String getDriverClass() {
-    return driverClass;
-  }
-
-  public void setDriverClass(String driverClass) {
-    this.driverClass = driverClass;
-  }
-
-  public int getBatchSize() {
-    return batchSize;
-  }
-
-  public void setBatchSize(int batchSize) {
-    this.batchSize = batchSize;
-  }
-
-  public int getMaxRetries() {
-    return maxRetries;
-  }
-
-  public void setMaxRetries(int maxRetries) {
-    this.maxRetries = maxRetries;
-  }
-
+  // Custom setter that always sets to true regardless of parameter
   public void setAdvancedMonitoringEnabled(boolean advancedMonitoringEnabled) {
     this.advancedMonitoringEnabled = true;
   }
@@ -136,38 +126,22 @@ public class WorkloadConfiguration {
     return this.advancedMonitoringEnabled;
   }
 
-  /**
-   * @return @see newConnectionPerTxn member docs for behavior.
-   */
-  public boolean getNewConnectionPerTxn() {
-    return newConnectionPerTxn;
+  // Custom getter with different name
+  public boolean localMetricsDisabled() {
+    return disableLocalMetrics;
   }
 
-  /**
-   * Used by the configuration loader at startup. Changing it any other time is probably
-   * dangeroues. @see newConnectionPerTxn member docs for behavior.
-   *
-   * @param newConnectionPerTxn
-   */
-  public void setNewConnectionPerTxn(boolean newConnectionPerTxn) {
-    this.newConnectionPerTxn = newConnectionPerTxn;
+  // Custom getter methods for skip flags
+  public boolean skipItemLoad() {
+    return skipItemLoad;
   }
 
-  /**
-   * @return @see reconnectOnConnectionFailure member docs for behavior.
-   */
-  public boolean getReconnectOnConnectionFailure() {
-    return reconnectOnConnectionFailure;
+  public boolean skipIndexBuild() {
+    return skipIndexBuild;
   }
 
-  /**
-   * Used by the configuration loader at startup. Changing it any other time is probably
-   * dangeroues. @see reconnectOnConnectionFailure member docs for behavior.
-   *
-   * @param reconnectOnConnectionFailure
-   */
-  public void setReconnectOnConnectionFailure(boolean reconnectOnConnectionFailure) {
-    this.reconnectOnConnectionFailure = reconnectOnConnectionFailure;
+  public boolean skipMainDataLoad() {
+    return this.skipMainDataLoad;
   }
 
   /** Initiate a new benchmark and workload state */
@@ -201,64 +175,6 @@ public class WorkloadConfiguration {
             timed,
             active_terminals,
             arrival));
-  }
-
-  /**
-   * The number of loader threads that the framework is allowed to use.
-   *
-   * @return
-   */
-  public int getLoaderThreads() {
-    return this.loaderThreads;
-  }
-
-  public void setLoaderThreads(int loaderThreads) {
-    this.loaderThreads = loaderThreads;
-  }
-
-  public double getSelectivity() {
-    return this.selectivity;
-  }
-
-  public void setSelectivity(double selectivity) {
-    this.selectivity = selectivity;
-  }
-
-  /**
-   * The random seed for this benchmark
-   *
-   * @return
-   */
-  public int getRandomSeed() {
-    return this.randomSeed;
-  }
-
-  /**
-   * Set the random seed for this benchmark
-   *
-   * @param randomSeed
-   */
-  public void setRandomSeed(int randomSeed) {
-    this.randomSeed = randomSeed;
-  }
-
-  /**
-   * Return the scale factor of the database size
-   *
-   * @return
-   */
-  public double getScaleFactor() {
-    return this.scaleFactor;
-  }
-
-  /**
-   * Set the scale factor for the database A value of 1 means the default size. A value greater than
-   * 1 means the database is larger A value less than 1 means the database is smaller
-   *
-   * @param scaleFactor
-   */
-  public void setScaleFactor(double scaleFactor) {
-    this.scaleFactor = scaleFactor;
   }
 
   /**
@@ -305,38 +221,6 @@ public class WorkloadConfiguration {
     }
   }
 
-  public int getTerminals() {
-    return terminals;
-  }
-
-  public void setTerminals(int terminals) {
-    this.terminals = terminals;
-  }
-
-  public TransactionTypes getTransTypes() {
-    return transTypes;
-  }
-
-  public void setTransTypes(TransactionTypes transTypes) {
-    this.transTypes = transTypes;
-  }
-
-  public List<Phase> getPhases() {
-    return phases;
-  }
-
-  public XMLConfiguration getXmlConfig() {
-    return xmlConfig;
-  }
-
-  public void setXmlConfig(XMLConfiguration xmlConfig) {
-    this.xmlConfig = xmlConfig;
-  }
-
-  public int getIsolationMode() {
-    return isolationMode;
-  }
-
   public void setIsolationMode(String mode) {
     switch (mode) {
       case "TRANSACTION_SERIALIZABLE":
@@ -370,51 +254,5 @@ public class WorkloadConfiguration {
     } else {
       return "TRANSACTION_SERIALIZABLE";
     }
-  }
-
-  @Override
-  public String toString() {
-    return "WorkloadConfiguration{"
-        + "phases="
-        + phases
-        + ", databaseType="
-        + databaseType
-        + ", benchmarkName='"
-        + benchmarkName
-        + '\''
-        + ", url='"
-        + url
-        + '\''
-        + ", username='"
-        + username
-        + '\''
-        + ", password='"
-        + password
-        + '\''
-        + ", driverClass='"
-        + driverClass
-        + '\''
-        + ", batchSize="
-        + batchSize
-        + ", maxRetries="
-        + maxRetries
-        + ", scaleFactor="
-        + scaleFactor
-        + ", selectivity="
-        + selectivity
-        + ", terminals="
-        + terminals
-        + ", loaderThreads="
-        + loaderThreads
-        + ", workloadState="
-        + workloadState
-        + ", transTypes="
-        + transTypes
-        + ", isolationMode="
-        + isolationMode
-        + ", dataDir='"
-        + dataDir
-        + '\''
-        + '}';
   }
 }
