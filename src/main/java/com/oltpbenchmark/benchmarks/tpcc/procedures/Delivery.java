@@ -36,6 +36,36 @@ public class Delivery extends TPCCProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(Delivery.class);
 
+  private static final String TX_NAME = "Delivery";
+  private static final String GET_ORDER_ID_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderId" + TPCCConstants.SEPARATOR;
+  private static final String GET_ORDER_ID_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderIdZeroResult";
+  private static final String NEW_ORDER_DELETE_NOT_ONE_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "newOrderDeleteNotOneResult";
+  private static final String UPDATE_CARRIER_ID_NOT_ONE_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateCarrierIdNotOneResult";
+  private static final String UPDATE_BALANCE_DELIVERY_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateBalanceDeliveryZeroResult";
+  private static final String UPDATE_DELIVERY_DATE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateDeliveryDateZeroResult";
+  private static final String DELETE_ORDER_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "deleteOrder" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_ID_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerId" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_ID_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerIdZeroResult";
+  private static final String UPDATE_CARRIER_ID_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateCarrierId" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_DELIVERY_DATE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateDeliveryDate" + TPCCConstants.SEPARATOR;
+  private static final String GET_ORDER_LINE_TOTAL_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderLineTotal" + TPCCConstants.SEPARATOR;
+  private static final String GET_ORDER_LINE_TOTAL_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getOrderLineTotalZeroResult";
+  private static final String UPDATE_BALANCE_DELIVERY_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateBalanceAndDelivery" + TPCCConstants.SEPARATOR;
+
   public SQLStmt delivGetOrderIdSQL =
       new SQLStmt(
           """
@@ -129,25 +159,29 @@ public class Delivery extends TPCCProcedure {
     int[] orderIDs = new int[10];
 
     for (d_id = 1; d_id <= terminalDistrictUpperID; d_id++) {
-      Integer no_o_id = getOrderId(conn, w_id, d_id);
+      // To fix local variables referenced from a lambda expression must be final or effectively
+      // final
+      final int d_id_local = d_id;
+
+      Integer no_o_id = getOrderId(conn, w_id, d_id_local);
 
       if (no_o_id == null) {
         continue;
       }
 
-      orderIDs[d_id - 1] = no_o_id;
+      orderIDs[d_id_local - 1] = no_o_id;
 
-      deleteOrder(conn, w_id, d_id, no_o_id);
+      deleteOrder(conn, w_id, d_id_local, no_o_id);
 
-      int customerId = getCustomerId(conn, w_id, d_id, no_o_id);
+      int customerId = getCustomerId(conn, w_id, d_id_local, no_o_id);
 
-      updateCarrierId(conn, w_id, o_carrier_id, d_id, no_o_id);
+      updateCarrierId(conn, w_id, o_carrier_id, d_id_local, no_o_id);
 
-      updateDeliveryDate(conn, w_id, d_id, no_o_id);
+      updateDeliveryDate(conn, w_id, d_id_local, no_o_id);
 
-      float orderLineTotal = getOrderLineTotal(conn, w_id, d_id, no_o_id);
+      float orderLineTotal = getOrderLineTotal(conn, w_id, d_id_local, no_o_id);
 
-      updateBalanceAndDelivery(conn, w_id, d_id, customerId, orderLineTotal);
+      updateBalanceAndDelivery(conn, w_id, d_id_local, customerId, orderLineTotal);
     }
 
     if (LOG.isTraceEnabled()) {
@@ -187,7 +221,6 @@ public class Delivery extends TPCCProcedure {
 
         if (!rs.next()) {
           // This district has no new orders.  This can happen but should be rare
-
           LOG.warn(String.format("District has no new orders [W_ID=%d, D_ID=%d]", w_id, d_id));
 
           return null;

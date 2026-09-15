@@ -40,6 +40,46 @@ public class Payment extends TPCCProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(Payment.class);
 
+  private static final String TX_NAME = "Payment";
+  private static final String GET_CUSTOMER_BY_NAME_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerByName" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_BY_NAME_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerByNameZeroResult";
+  private static final String GET_CUSTOMER_BY_ID_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerById" + TPCCConstants.SEPARATOR;
+  private static final String GET_CUSTOMER_BY_ID_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCustomerByIdZeroResult";
+  private static final String GET_WAREHOUSE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getWarehouse" + TPCCConstants.SEPARATOR;
+  private static final String GET_WAREHOUSE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getWarehouseZeroResult";
+  private static final String UPDATE_WAREHOUSE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateWarehouse" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_WAREHOUSE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateWarehouseZeroResult";
+  private static final String GET_DISTRICT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getDistrict" + TPCCConstants.SEPARATOR;
+  private static final String GET_DISTRICT_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getDistrictZeroResult";
+  private static final String UPDATE_DISTRICT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateDistrict" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_DISTRICT_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateDistrictZeroResult";
+  private static final String GET_C_DATA_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCData" + TPCCConstants.SEPARATOR;
+  private static final String GET_C_DATA_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "getCDataZeroResult";
+  private static final String UPDATE_BALANCE_C_DATA_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateBalanceCData" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_BALANCE_C_DATA_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateBalanceCDataZeroResult";
+  private static final String UPDATE_BALANCE_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateBalance" + TPCCConstants.SEPARATOR;
+  private static final String UPDATE_BALANCE_ZERO_RESULT_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "updateBalanceZeroResult";
+  private static final String INSERT_HISTORY_METRIC_NAME =
+      TX_NAME + TPCCConstants.SEPARATOR + "insertHistory" + TPCCConstants.SEPARATOR;
+
   public SQLStmt payUpdateWhseSQL =
       new SQLStmt(
           """
@@ -183,6 +223,7 @@ public class Payment extends TPCCProcedure {
 
     if (c.c_credit.equals("BC")) {
       // bad credit
+
       c.c_data =
           getCData(
               conn, w_id, districtID, customerDistrictID, customerWarehouseID, paymentAmount, c);
@@ -365,6 +406,7 @@ public class Payment extends TPCCProcedure {
               customerDistrictID,
               TPCCUtil.getNonUniformRandomLastNameForRun(gen),
               conn);
+
     } else {
       // 40% lookups by customer ID
       c =
@@ -611,8 +653,7 @@ public class Payment extends TPCCProcedure {
     }
 
     // TPC-C 2.5.2.2: Position n / 2 rounded up to the next integer, but
-    // that
-    // counts starting from 1.
+    // that counts starting from 1.
     int index = customers.size() / 2;
     if (customers.size() % 2 == 0) {
       index -= 1;

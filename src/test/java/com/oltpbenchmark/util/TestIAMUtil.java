@@ -16,7 +16,7 @@ public class TestIAMUtil {
   private AwsCredentialsProvider credentialsProvider;
   private DefaultAwsRegionProviderChain regionProvider;
   private static final String VALID_URL =
-      "jdbc:postgresql://localhost:5432/postgres?sslmode=require&amp;ApplicationName=tpcc&amp;reWriteBatchedInserts=true";
+      "jdbc:postgresql://localhost:5432/postgres?sslmode=verify-full&amp;ApplicationName=tpcc&amp;reWriteBatchedInserts=true";
   private static final String VALID_ADMIN_USERNAME = "admin";
 
   @Before
@@ -46,7 +46,7 @@ public class TestIAMUtil {
         RuntimeException.class,
         () ->
             IAMUtil.generateAuroraDsqlPasswordToken(
-                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, regionProvider));
+                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, Region.US_EAST_2));
   }
 
   @Test
@@ -56,6 +56,6 @@ public class TestIAMUtil {
         RuntimeException.class,
         () ->
             IAMUtil.generateAuroraDsqlPasswordToken(
-                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, regionProvider));
+                "htp:/bad-url", VALID_ADMIN_USERNAME, credentialsProvider, Region.US_EAST_2));
   }
 }
