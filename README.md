@@ -27,8 +27,8 @@ This fork applies performance best practices and minor PostgreSQL compatibility 
 - Proper handling of Aurora DSQL's async-only index creation to prevent blocking operations
 
 ### 6. **Foreign Key Constraint Compatibility**
-- Aurora DSQL currently does not support foreign key constraints, and this fork automatically handles this limitation
-- Schema definitions are optimized to work without foreign key constraints while maintaining data integrity through application logic
+- Aurora DSQL supports native foreign key constraints, and the TPC-C schema includes all standard relationships
+- Referential integrity checks add reads and can cause retryable serialization conflicts under concurrent writes, so account for that cost when comparing benchmark results
 
 These enhancements ensure optimal performance and reliability when benchmarking Aurora DSQL, providing results that accurately reflect the database's capabilities in real-world scenarios.
 
@@ -77,7 +77,7 @@ aws dsql create-cluster --region ${REGION}
 ```bash
 export CLUSTER_ENDPOINT=<cluster_id>.dsql.<region>.on.aws
 export REGION=<region>
-java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=true --load=true --execute=true --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" --region ${REGION}
+java -jar benchbase.jar -b tpcc -c config/auroradsql/sample_tpcc_config.xml --create=true --load=true --execute=true --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" --region ${REGION}
 ```
 
 The default configuration will setup a TPC-C run for 200 warehouses. To learn more about the config file changes and the benchmarking results, checkout this [wiki](https://github.com/amazon-contributing/aurora-dsql-benchbase-benchmarking/wiki#loading-data-and-running-tpc-c-against-an-aurora-dsql-cluster).
@@ -111,7 +111,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --skipMainDataLoad true \
     --scalefactor 200 \
@@ -131,7 +131,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --scalefactor 200 \
     --startWarehouseIndex 1 \
@@ -151,7 +151,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --scalefactor 200 \
     --startWarehouseIndex 2 \
@@ -171,7 +171,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --scalefactor 200 \
     --startWarehouseIndex 3 \
@@ -197,7 +197,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --scalefactor 200 \
     --startWarehouseIndex 1 \
@@ -217,7 +217,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --scalefactor 200 \
     --startWarehouseIndex 2 \
@@ -237,7 +237,7 @@ java \
     -jar benchbase.jar \
     -b tpcc \
     -c config/auroradsql/sample_tpcc_config.xml \
-    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=require&ApplicationName=tpcc&reWriteBatchedInserts=true" \
+    --url "jdbc:postgresql://${CLUSTER_ENDPOINT}:5432/postgres?sslmode=verify-full&ApplicationName=tpcc&reWriteBatchedInserts=true" \
     --region ${REGION} \
     --scalefactor 200 \
     --startWarehouseIndex 3 \

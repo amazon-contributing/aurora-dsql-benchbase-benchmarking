@@ -85,17 +85,17 @@ public final class TPCCBenchmark extends BenchmarkModule {
 
     // totalWarehouses is equal to numWarehouses in case of non-partitioned use case
     int totalWarehouses = (int) workConf.getScaleFactor();
-
     if (totalWarehouses <= 0) {
-      // At least one warehouse, @see
-      // https://github.com/cmu-db/benchbase/blob/main/src/main/java/com/oltpbenchmark/benchmarks/tpcc/TPCCBenchmark.java
       totalWarehouses = 1;
     }
 
-    // Default values used for warehouse indexes and stride
-    final int startWarehouseIndex = 1;
-    final int endWarehouseIndex = totalWarehouses;
-    final int stride = 1;
+    // [startWarehouseIndex, endWarehouseIndex] are both included.
+    // Use defaults if not configured: start=1, end=totalWarehouses, stride=1
+    final int startWarehouseIndex =
+        workConf.getStartWarehouseIndex() > 0 ? workConf.getStartWarehouseIndex() : 1;
+    final int endWarehouseIndex =
+        workConf.getEndWarehouseIndex() > 0 ? workConf.getEndWarehouseIndex() : totalWarehouses;
+    final int stride = workConf.getStride() > 0 ? workConf.getStride() : 1;
 
     LOG.info(
         "Start warehouse idx: {} end warehouse idx: {} stride: {}",
@@ -110,6 +110,10 @@ public final class TPCCBenchmark extends BenchmarkModule {
     final int numWarehouses = w_ids.size();
     int numTerminals = workConf.getTerminals();
 
+    assert startWarehouseIndex >= 1 : "The start index must be >= 1";
+    assert endWarehouseIndex >= 1 : "The end index must be >= 1";
+    assert endWarehouseIndex <= totalWarehouses
+        : "The end index must be within the total warehouse number";
     assert numWarehouses >= 1 : "At least need 1 warehouse to do benchmark";
 
     // We distribute terminals evenly across the warehouses
