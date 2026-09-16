@@ -24,16 +24,12 @@ if ! [ -s "$results_json" ]; then
     exit 1
 fi
 
-# User-controlled aborts are valid benchmark outcomes, not errors.
-# Aggregate only rejected and unexpected samples as errors.
+# First transform the histograms into a single object with aggregate count of error and completed samples.
 summary_json=$(cat "$results_json" | jq -e '
     to_entries
     | {
         "completed_samples": ( .[] | select(.key == "completed") | .value.NUM_SAMPLES ),
-        "errored_samples": (
-            [ .[] | select(.key == "rejected" or .key == "unexpected") | .value.NUM_SAMPLES ]
-            | add
-        )
+        "errored_samples": ( [ .[] | select(.key != "completed" ) | .value.NUM_SAMPLES ] | add )
     }
     | .error_rate = (.errored_samples / .completed_samples)'
 )
