@@ -114,6 +114,11 @@ jobs:
           java-version: ${{env.JAVA_VERSION}}
           distribution: 'temurin'
 
+      - name: Configure PostgreSQL root certificate
+        run: |
+          mkdir -p "${HOME}/.postgresql"
+          install -m 0600 /etc/ssl/certs/ca-certificates.crt "${HOME}/.postgresql/root.crt"
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
