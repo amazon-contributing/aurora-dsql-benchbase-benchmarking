@@ -81,11 +81,12 @@ jobs:
   ## ----------------------------------------------------------------------------------
   auroradsql:
     needs: package-and-upload
-    # Only run on the main repository, not on forks (which don't have AWS credentials)
-    if: github.repository == 'amazon-contributing/aurora-dsql-benchbase-benchmarking'
+    # Repository secrets are unavailable to forks and Dependabot-triggered workflows.
+    if: github.repository == 'amazon-contributing/aurora-dsql-benchbase-benchmarking' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      # All runs use the same DSQL cluster and database.
+      group: ${{ github.workflow }}-auroradsql
       cancel-in-progress: false
     permissions:
       id-token: write # This is required for requesting the JWT
